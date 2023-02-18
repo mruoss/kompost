@@ -14,8 +14,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       namespace: default
     spec:
       hostname: 127.0.0.1
-      port: 15432
-      username: postgres
+      port: #{System.fetch_env!("EXPOSED_PORT")}
+      username: #{System.fetch_env!("POSTGRES_USER")}
     """
     |> put_in(~w(metadata labels), @resource_label)
   end
@@ -25,11 +25,11 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     |> resource()
     |> put_in(~w(spec passwordSecretRef), %{
       "name" => name,
-      "key" => "password"
+      "key" => System.fetch_env!("POSTGRES_PASSWORD")
     })
   end
 
-  defp resource_with_plain_pw(name, password \\ "password") do
+  defp resource_with_plain_pw(name, password \\ System.fetch_env!("POSTGRES_PASSWORD")) do
     name
     |> resource()
     |> put_in(~w(spec plainPassword), password)
