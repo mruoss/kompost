@@ -23,8 +23,27 @@ defmodule Kompost.Kompo.Postgre.Instance do
       args = Keyword.put(args, :name, {:via, Registry, {ConnectionRegistry, id}})
       DynamicSupervisor.start_child(ConnectionSupervisor, {Postgrex, args})
     else
-      {:lookup, [conn, _]} -> {:ok, conn}
+      {:lookup, [{conn, _}]} -> {:ok, conn}
       connection_error -> connection_error
+    end
+  end
+
+  @spec check_privileges(Postgrex.conn()) :: :ok | {:error, binary()}
+  def check_privileges(conn) do
+    case Postgrex.query(
+           conn,
+           "select rolcreaterole,rolcreatedb from pg_authid where rolname = CURRENT_USER",
+           []
+         ) do
+      {:ok, result} ->
+        case result.rows do
+          [[true, true]] -> :ok
+          [[false, _]] -> {:error, "The user does not have the CREATEROLE privilege."}
+          [[_, false]] -> {:error, "The user does not have the CREATEDB privilege."}
+        end
+
+      _ ->
+        {:error, "Unable to query the current user's privileges."}
     end
   end
 end

@@ -22,10 +22,12 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
          axn <- set_condition(axn, "Credentials", true),
          {:id, id} <-
            {:id, {axn.resource["metadata"]["namespace"], axn.resource["metadata"]["name"]}},
-         {:conn, axn, {:ok, _pid}} <- {:conn, axn, Instance.connect(id, connection_args)},
-         axn <- set_condition(axn, "Connected", true) do
-      axn
-      |> success_event()
+         {:conn, axn, {:ok, conn}} <- {:conn, axn, Instance.connect(id, connection_args)},
+         axn <- set_condition(axn, "Connected", true, "Connection to database was established"),
+         {:privileges, :ok} <- {:privileges, Instance.check_privileges(conn)},
+         axn <-
+           set_condition(axn, "Privileged", true, "The conneted user has the required privileges") do
+      success_event(axn)
     else
       {:cred, {:error, error}} ->
         Logger.warn("Error when trying to fetch password.", error: error)
@@ -38,6 +40,11 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
         axn
         |> failure_event(message: Exception.message(error))
         |> set_condition("Connected", false, Exception.message(error))
+
+      {:privileges, {:error, message}} ->
+        axn
+        |> failure_event(message: message)
+        |> set_condition("Privileged", false, message)
     end
   end
 
