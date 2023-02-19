@@ -8,7 +8,21 @@ defmodule Kompost.MixProject do
       elixir: "~> 1.14",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      elixirc_paths: elixirc_paths(Mix.env())
+      elixirc_paths: elixirc_paths(Mix.env()),
+      preferred_cli_env: cli_env()
+    ]
+  end
+
+  defp cli_env do
+    [
+      coveralls: :test,
+      "coveralls.detail": :test,
+      "coveralls.post": :test,
+      "coveralls.html": :test,
+      "coveralls.travis": :test,
+      "coveralls.github": :test,
+      "coveralls.xml": :test,
+      "coveralls.json": :test
     ]
   end
 
@@ -33,7 +47,8 @@ defmodule Kompost.MixProject do
       # Dev dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2.0", only: [:dev, :test], runtime: false},
-      {:dotenv_parser, "~> 2.0", only: [:dev, :test], runtime: false}
+      {:dotenv_parser, "~> 2.0", only: [:dev, :test], runtime: false},
+      {:excoveralls, "~> 0.15", only: :test}
     ]
   end
 end

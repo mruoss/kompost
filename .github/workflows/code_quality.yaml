@@ -10,29 +10,43 @@ env:
   KUBECONFIG: /home/runner/.kube/config
 
 jobs:
-  test:
+  docker-compose:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: isbang/compose-action@v1.4.1
+  elixir:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        k8s_version: [v1.26.0]
         elixir: [1.14.x]
         otp: [25.x]
     steps:
-      - uses: actions/checkout@v3
-      - uses: isbang/compose-action@v1.4.1
-      - uses: engineerd/setup-kind@v0.5.0
-        id: kind
-        with:
-          version: v0.17.0
-          image: kindest/node:${{ matrix.k8s_version }}
-
       - name: Setup elixir
         id: beam
         uses: erlef/setup-beam@v1
         with:
           elixir-version: ${{matrix.elixir}}
           otp-version: ${{matrix.otp}}
+  k8s:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        k8s_version: [v1.26.0]
+    steps:
+      - uses: engineerd/setup-kind@v0.5.0
+        id: kind
+        with:
+          version: v0.17.0
+          image: kindest/node:${{ matrix.k8s_version }}
 
+  code-quality:
+    runs-on: ubuntu-latest
+    needs:
+      - docker-compose
+      - elixir
+      - k8s
+    steps:
+      - uses: actions/checkout@v3
       - name: Retrieve Build Cache
         uses: actions/cache@v3
         id: build-folder-cache
