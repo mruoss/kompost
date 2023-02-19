@@ -5,8 +5,8 @@ defmodule Kompost.Kompo.Postgres.Operator do
 
   use Bonny.Operator, default_watch_namespace: "default"
 
-  alias Kompost.Kompo.Postgres.V1Alpha1
   alias Kompost.Kompo.Postgres.Controller
+  alias Kompost.Kompo.Postgres.V1Alpha1
 
   step(Bonny.Pluggable.Logger, level: :info)
   step(:delegate_to_controller)
