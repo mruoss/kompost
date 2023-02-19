@@ -24,3 +24,5 @@ kompost-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+/test/integration/cluster*.yaml

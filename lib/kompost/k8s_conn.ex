@@ -13,7 +13,7 @@ defmodule Kompost.K8sConn do
   def get!(:dev) do
     {:ok, conn} =
       File.cwd!()
-      |> Path.join("integration.yaml")
+      |> Path.join("test/integration/cluster.yaml")
       |> K8s.Conn.from_file()
 
     struct!(conn, insecure_skip_tls_verify: true)
@@ -22,7 +22,7 @@ defmodule Kompost.K8sConn do
   def get!(:test) do
     {:ok, conn} =
       "TEST_KUBECONFIG"
-      |> System.get_env("./integration.yaml")
+      |> System.get_env("./test/integration/cluster.yaml")
       |> K8s.Conn.from_file()
 
     struct!(conn, insecure_skip_tls_verify: true)

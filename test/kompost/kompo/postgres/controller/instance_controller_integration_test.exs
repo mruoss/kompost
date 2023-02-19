@@ -107,7 +107,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -143,7 +143,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -173,7 +173,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -211,7 +211,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -241,7 +241,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -279,7 +279,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         K8s.Client.wait_until(get_op,
           find: ["status", "observedGeneration"],
           eval: created_resource["metadata"]["generation"],
-          timeout: Integer.floor_div(timeout, 1000)
+          timeout: timeout
         )
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
@@ -309,7 +309,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     #     K8s.Client.wait_until(get_op,
     #       find: ["status", "observedGeneration"],
     #       eval: created_resource["metadata"]["generation"],
-    #       timeout: Integer.floor_div(timeout, 1000)
+    #       timeout: timeout
     #     )
 
     #   conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
