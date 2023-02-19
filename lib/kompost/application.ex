@@ -12,7 +12,7 @@ defmodule Kompost.Application do
 
   @spec kompos(atom()) :: list({module(), term()})
   defp kompos(env) when env in [:dev, :test] do
-    [{Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(:dev)]}]
+    [{Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(env)]}]
   end
 
   defp kompos(_) do

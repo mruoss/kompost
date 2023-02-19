@@ -19,5 +19,14 @@ defmodule Kompost.K8sConn do
     struct!(conn, insecure_skip_tls_verify: true)
   end
 
+  def get!(:test) do
+    {:ok, conn} =
+      "TEST_KUBECONFIG"
+      |> System.get_env("./integration.yaml")
+      |> K8s.Conn.from_file()
+
+    struct!(conn, insecure_skip_tls_verify: true)
+  end
+
   def get!(_), do: K8s.Conn.from_service_account()
 end
