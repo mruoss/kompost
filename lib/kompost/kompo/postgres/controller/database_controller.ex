@@ -10,8 +10,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
   import YamlElixir.Sigil
 
-  step(Bonny.Pluggable.SkipObservedGenerations)
-  step(:handle_event)
+  step Bonny.Pluggable.SkipObservedGenerations
+  step Kompost.Pluggable.InitConditions, conditions: ["Connection", "AppUser", "InspectorUser"]
+  step :handle_event
 
   @impl true
   def rbac_rules() do
@@ -33,8 +34,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              "Connected to the referenced PostgreSQL instance."
            ),
-         {:app_user, {:ok, app_user_env}} <-
-           {:app_user, User.apply(conn, db_name, :app, Password.random_string())},
+         {:app_user, axn, {:ok, app_user_env}} <-
+           {:app_user, axn, User.apply(conn, db_name, :app, Password.random_string())},
          axn <-
            set_condition(
              axn,
@@ -43,8 +44,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              "Application user was created successfully."
            ),
          {:ok, axn} <- create_user_secret(axn, :app, app_user_env, db_name, conn_args),
-         {:inspector_user, {:ok, inspector_user_env}} <-
-           {:inspector_user, User.apply(conn, db_name, :inspector, Password.random_string())},
+         {:inspector_user, axn, {:ok, inspector_user_env}} <-
+           {:inspector_user, axn, User.apply(conn, db_name, :inspector, Password.random_string())},
          axn <-
            set_condition(
              axn,
@@ -63,12 +64,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
         |> failure_event(message: message)
         |> set_condition("Connection", false, message)
 
-      {:app_user, {:error, message}} ->
+      {:app_user, axn, {:error, message}} ->
         axn
         |> failure_event(message: message)
         |> set_condition("AppUser", false, message)
 
-      {:inspector_user, {:error, message}} ->
+      {:inspector_user, axn, {:error, message}} ->
         axn
         |> failure_event(message: message)
         |> set_condition("InspectorUser", false, message)

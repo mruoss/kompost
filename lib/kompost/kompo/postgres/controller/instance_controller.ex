@@ -5,8 +5,9 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
   alias Kompost.Kompo.Postgres.Instance
 
-  step(Bonny.Pluggable.SkipObservedGenerations)
-  step(:handle_event)
+  step Bonny.Pluggable.SkipObservedGenerations
+  step Kompost.Pluggable.InitConditions, conditions: ["Credentials", "Connected", "Privileged"]
+  step :handle_event
 
   @impl true
   def rbac_rules() do
