@@ -70,11 +70,13 @@ jobs:
       - name: Run Credo
         run: mix credo --strict
 
+      - name: Compile
+        run: MIX_ENV=test mix compile --warnings-as-errors
+
       - name: Run Coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MIX_ENV=test mix compile
           MIX_ENV=test mix bonny.gen.manifest -o - | kubectl apply -f -
           TEST_WAIT_TIMEOUT=10000 TEST_KUBECONFIG=$KUBECONFIG mix coveralls.github --include integration --timeout 12000
 
