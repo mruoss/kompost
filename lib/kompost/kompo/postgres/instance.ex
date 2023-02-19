@@ -28,6 +28,9 @@ defmodule Kompost.Kompo.Postgre.Instance do
     end
   end
 
+  @spec get_id(resource :: map()) :: id()
+  def get_id(resource), do: {resource["metadata"]["namespace"], resource["metadata"]["name"]}
+
   @spec check_privileges(Postgrex.conn()) :: :ok | {:error, binary()}
   def check_privileges(conn) do
     case Postgrex.query(
@@ -44,6 +47,18 @@ defmodule Kompost.Kompo.Postgre.Instance do
 
       _ ->
         {:error, "Unable to query the current user's privileges."}
+    end
+  end
+
+  @spec disconnect(id()) :: :ok
+  def disconnect(id) do
+    case Registry.lookup(ConnectionRegistry, id) do
+      [{conn, _}] ->
+        Process.exit(conn, :normal)
+        :ok
+
+      [] ->
+        :ok
     end
   end
 end

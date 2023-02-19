@@ -21,7 +21,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
     with {:cred, {:ok, connection_args}} <- {:cred, get_connection_args(axn.resource, axn.conn)},
          axn <- set_condition(axn, "Credentials", true),
          {:id, id} <-
-           {:id, {axn.resource["metadata"]["namespace"], axn.resource["metadata"]["name"]}},
+           {:id, Instance.get_id(axn.resource)},
          {:conn, axn, {:ok, conn}} <- {:conn, axn, Instance.connect(id, connection_args)},
          axn <- set_condition(axn, "Connected", true, "Connection to database was established"),
          {:privileges, :ok} <- {:privileges, Instance.check_privileges(conn)},
@@ -48,9 +48,13 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
     end
   end
 
-  # delete the resource
   def handle_event(%Bonny.Axn{action: :delete} = axn, _opts) do
-    axn
+    :ok =
+      axn.resource
+      |> Instance.get_id()
+      |> Instance.disconnect()
+
+    success_event(axn)
   end
 
   @spec get_connection_args(map(), K8s.Conn.t()) ::
