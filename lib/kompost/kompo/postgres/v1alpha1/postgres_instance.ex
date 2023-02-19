@@ -1,6 +1,6 @@
 defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresInstance do
   @moduledoc """
-  Postgres Instance CRD V1 version.
+  Postgres Instance CRD v1alpha1 version.
   """
 
   import YamlElixir.Sigil
@@ -40,7 +40,7 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresInstance do
                     type: string
               plainPassword:
                   type: string
-                  description: "It's not safe to save passwords in plaintext. Consider using argsFrom instead."
+                  description: "It's not safe to save passwords in plaintext. Consider using passwordSecretRef instead."
       """a
     )
     |> add_observed_generation_status()
