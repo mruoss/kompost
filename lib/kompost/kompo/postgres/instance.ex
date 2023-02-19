@@ -1,4 +1,4 @@
-defmodule Kompost.Kompo.Postgre.Instance do
+defmodule Kompost.Kompo.Postgres.Instance do
   @moduledoc """
   Provides an interface to Postgrex. `connect/2` starts Postgrex under
   a dynamic supervisor (`Kompost.Kompo.Postgres.ConnectionSupervisor`) and
@@ -8,19 +8,30 @@ defmodule Kompost.Kompo.Postgre.Instance do
   alias Kompost.Kompo.Postgres.ConnectionRegistry
   alias Kompost.Kompo.Postgres.ConnectionSupervisor
 
+  @typedoc """
+  Defines the ID for an instance. The ID used as key when registering the
+  Postgrex process at the `Kompost.Kompo.Postgres.ConnectionRegistry`
+  """
   @type id :: {namespace :: binary(), name :: binary()}
 
-  @spec connect(id, Keyword.t()) ::
+  @doc """
+  Checks in the `Kompost.Kompo.Postgres.ConnectionRegistry` for an existing
+  connection defined by the given `id`. If no such connection exists, a new
+  `Postgrex` process is started, connecting to a Postgres instance defined by
+  the `conn_args`. The process is then registered at the
+  `Kompost.Kompo.Postgres.ConnectionRegistry`.
+  """
+  @spec connect(id(), conn_args :: Keyword.t()) ::
           {:ok, Postgrex.conn()}
-          | {:error, Postgrex.Error.t() | struct()}
+          | {:error, Postgrex.Error.t() | Exception.t()}
           | DynamicSupervisor.on_start_child()
-  def connect(id, args) do
-    with {:lookup, []} <- {:lookup, Registry.lookup(ConnectionRegistry, id)},
+  def connect(id, conn_args) do
+    with {:lookup, []} <- {:lookup, lookup(id)},
          {:ok, _} <-
-           args
+           conn_args
            |> Postgrex.Utils.default_opts()
            |> Postgrex.Protocol.connect() do
-      args = Keyword.put(args, :name, {:via, Registry, {ConnectionRegistry, id}})
+      args = Keyword.put(conn_args, :name, {:via, Registry, {ConnectionRegistry, id, conn_args}})
       DynamicSupervisor.start_child(ConnectionSupervisor, {Postgrex, args})
     else
       {:lookup, [{conn, _}]} -> {:ok, conn}
@@ -28,10 +39,30 @@ defmodule Kompost.Kompo.Postgre.Instance do
     end
   end
 
+  @doc """
+  Checks in the `Kompost.Kompo.Postgres.ConnectionRegistry` for an existing
+  connection defined by the given `id`.
+  """
+  @spec lookup(id()) :: [{pid, any}]
+  def lookup(id), do: Registry.lookup(ConnectionRegistry, id)
+
+  @doc """
+  Creates an instance id tuple from a resource.
+
+  ### Example
+
+      iex> resource = %{"metadata" => %{"namespace" => "default", "name" => "foo-bar"}}
+      ...> Kompost.Kompo.Postgres.Instance.get_id(resource)
+      {"default", "foo-bar"}
+  """
   @spec get_id(resource :: map()) :: id()
   def get_id(resource), do: {resource["metadata"]["namespace"], resource["metadata"]["name"]}
 
-  @spec check_privileges(Postgrex.conn()) :: :ok | {:error, binary()}
+  @doc """
+  Checks if the user connected to the given `conn` has all the privileges
+  required to work with this `Kompo`.
+  """
+  @spec check_privileges(conn :: Postgrex.conn()) :: :ok | {:error, binary()}
   def check_privileges(conn) do
     case Postgrex.query(
            conn,
@@ -50,9 +81,13 @@ defmodule Kompost.Kompo.Postgre.Instance do
     end
   end
 
+  @doc """
+  Disconnects the connection with the given `id` by stopping the referenced
+  `Postgrex` process.
+  """
   @spec disconnect(id()) :: :ok
   def disconnect(id) do
-    case Registry.lookup(ConnectionRegistry, id) do
+    case lookup(id) do
       [{conn, _}] ->
         Process.exit(conn, :normal)
         :ok

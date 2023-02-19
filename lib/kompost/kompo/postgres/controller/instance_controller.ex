@@ -3,25 +3,23 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
   require Logger
 
-  alias Kompost.Kompo.Postgre.Instance
+  alias Kompost.Kompo.Postgres.Instance
 
   step(Bonny.Pluggable.SkipObservedGenerations)
   step(:handle_event)
 
   @impl true
   def rbac_rules() do
-    [
-      to_rbac_rule({"v1", "Secret", ["get", "list"]})
-    ]
+    [to_rbac_rule({"v1", "Secret", ["get", "list"]})]
   end
 
   @spec handle_event(Bonny.Axn.t(), Keyword.t()) :: Bonny.Axn.t()
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
+    id = Instance.get_id(axn.resource)
+
     with {:cred, {:ok, connection_args}} <- {:cred, get_connection_args(axn.resource, axn.conn)},
          axn <- set_condition(axn, "Credentials", true),
-         {:id, id} <-
-           {:id, Instance.get_id(axn.resource)},
          {:conn, axn, {:ok, conn}} <- {:conn, axn, Instance.connect(id, connection_args)},
          axn <- set_condition(axn, "Connected", true, "Connection to database was established"),
          {:privileges, :ok} <- {:privileges, Instance.check_privileges(conn)},
