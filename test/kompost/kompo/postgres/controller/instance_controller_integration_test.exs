@@ -5,6 +5,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   @resource_label %{"test" => "postgres-instance-controller-integration"}
 
+  @spec resource(name :: binary()) :: map()
   defp resource(name) do
     ~y"""
     apiVersion: kompost.io/v1alpha1
@@ -20,6 +21,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     |> put_in(~w(metadata labels), @resource_label)
   end
 
+  @spec resource_with_secret_ref(name :: binary()) :: map()
   defp resource_with_secret_ref(name) do
     name
     |> resource()
@@ -29,12 +31,14 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     })
   end
 
+  @spec resource_with_plain_pw(name :: binary(), password :: binary()) :: map()
   defp resource_with_plain_pw(name, password \\ System.fetch_env!("POSTGRES_PASSWORD")) do
     name
     |> resource()
     |> put_in(~w(spec plainPassword), password)
   end
 
+  @spec password_secret(name :: binary()) :: map()
   defp password_secret(name) do
     ~y"""
     apiVersion: v1

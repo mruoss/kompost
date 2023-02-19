@@ -10,6 +10,7 @@ defmodule Kompost.Application do
     Supervisor.start_link(children, opts)
   end
 
+  @spec kompos(atom()) :: list({module(), term()})
   defp kompos(env) when env in [:dev, :test] do
     [{Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(:dev)]}]
   end
@@ -19,5 +20,6 @@ defmodule Kompost.Application do
     []
   end
 
+  @spec conn(atom()) :: K8s.Conn.t()
   defp conn(env), do: Kompost.K8sConn.get!(env)
 end

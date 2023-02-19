@@ -1,6 +1,11 @@
 defmodule Kompost.Kompo.Postgres.Supervisor do
+  @moduledoc """
+  Supervisor for the Postgres Kompo.
+  """
+
   use Supervisor
 
+  @spec start_link(Keyword.t()) :: Supervisor.on_start()
   def start_link(init_args) do
     Supervisor.start_link(__MODULE__, init_args, name: __MODULE__)
   end

@@ -3,7 +3,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
   require Logger
 
-  alias Kompost.Compo.PSQL.Instance
+  alias Kompost.Kompo.Postgre.Instance
 
   step(Bonny.Pluggable.SkipObservedGenerations)
   step(:handle_event)
@@ -15,7 +15,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
     ]
   end
 
-  #  apply the resource
+  @spec handle_event(Bonny.Axn.t(), Keyword.t()) :: Bonny.Axn.t()
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
     with {:cred, {:ok, connection_args}} <- {:cred, get_connection_args(axn.resource, axn.conn)},
@@ -46,6 +46,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
     axn
   end
 
+  @spec get_connection_args(map(), K8s.Conn.t()) ::
+          {:ok, [Postgrex.start_option()]} | {:error, K8s.Client.Runner.Base.error_t()}
   defp get_connection_args(%{"spec" => %{"plainPassword" => _} = spec}, _conn) do
     {:ok,
      [
