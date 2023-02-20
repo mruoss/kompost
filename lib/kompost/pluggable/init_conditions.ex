@@ -9,7 +9,9 @@ defmodule Kompost.Pluggable.InitConditions do
   def init(opts), do: Keyword.fetch!(opts, :conditions)
 
   @impl true
-  def call(axn, conditions) do
+  def call(%Bonny.Axn{action: :add} = axn, conditions) do
     Enum.reduce(conditions, axn, &Bonny.Axn.set_condition(&2, &1, false))
   end
+
+  def call(axn, _), do: axn
 end
