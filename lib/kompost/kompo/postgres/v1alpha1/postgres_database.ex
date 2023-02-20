@@ -33,10 +33,15 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
             :properties:
               sql_db_name:
                 type: string
-              app_user_secret:
-                type: string
-              inspector_user_secret:
-                type: string
+              user_secrets:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    username:
+                      type: string
+                    secret:
+                      type: string
       """a
     )
     |> add_observed_generation_status()

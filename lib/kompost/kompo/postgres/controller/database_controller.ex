@@ -5,6 +5,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
   alias Kompost.Kompo.Postgres.Database
   alias Kompost.Kompo.Postgres.Instance
+  alias Kompost.Kompo.Postgres.Privileges
   alias Kompost.Kompo.Postgres.User
   alias Kompost.Tools.Password
 
@@ -34,8 +35,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              "Connected to the referenced PostgreSQL instance."
            ),
-         {:app_user, axn, {:ok, app_user_env}} <-
-           {:app_user, axn, User.apply(conn, db_name, :app, Password.random_string())},
+         {:app_user, {:ok, axn}} <-
+           {:app_user, apply_user("app", :read_write, axn, conn, conn_args, db_name)},
          axn <-
            set_condition(
              axn,
@@ -43,18 +44,15 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              "Application user was created successfully."
            ),
-         {:ok, axn} <- create_user_secret(axn, :app, app_user_env, db_name, conn_args),
-         {:inspector_user, axn, {:ok, inspector_user_env}} <-
-           {:inspector_user, axn, User.apply(conn, db_name, :inspector, Password.random_string())},
+         {:inspector_user, {:ok, axn}} <-
+           {:inspector_user, apply_user("inspector", :read_only, axn, conn, conn_args, db_name)},
          axn <-
            set_condition(
              axn,
              "InspectorUser",
              true,
              "Inspector user was created successfully."
-           ),
-         {:ok, axn} <-
-           create_user_secret(axn, :inspector, inspector_user_env, db_name, conn_args) do
+           ) do
       success_event(axn)
     else
       {:instance, []} ->
@@ -64,12 +62,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
         |> failure_event(message: message)
         |> set_condition("Connection", false, message)
 
-      {:app_user, axn, {:error, message}} ->
+      {:app_user, {:error, axn, message}} ->
         axn
         |> failure_event(message: message)
         |> set_condition("AppUser", false, message)
 
-      {:inspector_user, axn, {:error, message}} ->
+      {:inspector_user, {:error, axn, message}} ->
         axn
         |> failure_event(message: message)
         |> set_condition("InspectorUser", false, message)
@@ -80,22 +78,17 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     success_event(axn)
   end
 
-  @spec create_user_secret(
-          Bonny.Axn.t(),
-          user_type :: User.user_type(),
-          app_user_env :: map(),
-          db_name :: binary(),
+  @spec apply_user_secret(
+          axn :: Bonny.Axn.t(),
+          secret_name :: binary(),
+          user_env :: map(),
           conn_args :: Keyword.t()
         ) :: {:ok, Bonny.Axn.t()}
-  defp create_user_secret(axn, user_type, app_user_env, db_name, conn_args) do
-    resource_name = K8s.Resource.FieldAccessors.name(axn.resource)
-    secret_name = Slugger.slugify_downcase("psql-#{resource_name}-#{user_type}", ?-)
-
+  defp apply_user_secret(axn, secret_name, user_env, conn_args) do
     data =
-      Map.merge(app_user_env, %{
+      Map.merge(user_env, %{
         DB_HOST: Keyword.fetch!(conn_args, :hostname),
-        DB_PORT: Keyword.fetch!(conn_args, :port),
-        DB_NAME: db_name
+        DB_PORT: Keyword.fetch!(conn_args, :port)
       })
 
     user_secret =
@@ -108,14 +101,49 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       """
       |> Map.put("stringData", data)
 
+    status_entry = %{"username" => user_env["DB_USER"], "secret" => secret_name}
+
     axn =
       axn
       |> Bonny.Axn.register_descendant(user_secret)
       |> Bonny.Axn.update_status(fn status ->
-        status
-        |> Map.put("#{user_type}_user_secret", secret_name)
+        Map.update(status, "secrets", [status_entry], &[status_entry | &1])
       end)
 
     {:ok, axn}
+  end
+
+  @spec apply_user(
+          username :: binary(),
+          user_access :: Privileges.access(),
+          Bonny.Axn.t(),
+          Postgrex.conn(),
+          conn_args :: Keyword.t(),
+          db_name :: binary()
+        ) :: {:ok, Bonny.Axn.t()} | {:error, binary()}
+  defp apply_user(username, user_access, axn, conn, conn_args, db_name) do
+    resource_name = K8s.Resource.FieldAccessors.name(axn.resource)
+    resource_namespace = K8s.Resource.FieldAccessors.namespace(axn.resource)
+    secret_name = Slugger.slugify_downcase("psql-#{resource_name}-#{username}", ?-)
+    password = get_user_password(axn.conn, resource_namespace, secret_name)
+
+    with {:ok, user_env} <- User.apply(username, conn, db_name, password),
+         :ok <- Privileges.grant(user_env["DB_USER"], "CURRENT_USER", conn),
+         :ok <- Privileges.grant(user_env["DB_USER"], user_access, db_name, conn) do
+      apply_user_secret(axn, secret_name, user_env, conn_args)
+    else
+      {:error, error} ->
+        {:error, axn, error}
+    end
+  end
+
+  @spec get_user_password(K8s.Conn.t(), namespace :: binary(), name :: binary()) :: binary()
+  defp get_user_password(conn, namespace, name) do
+    case K8s.Client.get("v1", "Secret", namespace: namespace, name: name)
+         |> K8s.Client.put_conn(conn)
+         |> K8s.Client.run() do
+      {:ok, secret} -> secret["data"]["DB_PASS"] |> Base.decode64!()
+      {:error, _} -> Password.random_string()
+    end
   end
 end
