@@ -13,13 +13,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
   step Bonny.Pluggable.SkipObservedGenerations
 
+  step Kompost.Pluggable.InitConditions, conditions: ["Connection", "AppUser", "InspectorUser"]
+
   step Bonny.Pluggable.Finalizer,
-    id: "kompost.io/database",
-    impl: &__MODULE__.drop_database/1,
-    add_to_resource: &__MODULE__.deletion_policy_not_abandon?/1,
+    id: "kompost.io/delete-resources",
+    impl: &__MODULE__.delete_resources/1,
+    add_to_resource: &__MODULE__.add_finalizer?/1,
     log_level: :debug
 
-  step Kompost.Pluggable.InitConditions, conditions: ["Connection", "AppUser", "InspectorUser"]
   step :handle_event
 
   @impl true
@@ -94,8 +95,39 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     end
   end
 
+  # See `delete_resources/1`
   def handle_event(%Bonny.Axn{action: :delete} = axn, _opts) do
     success_event(axn)
+  end
+
+  @doc """
+  Finalizer preventing the deletion of the database resource until underlying
+  resources on the postgres instance are cleaned up.
+  """
+  @spec delete_resources(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
+  def delete_resources(axn) do
+    resource = axn.resource
+    instance_id = Instance.get_id(resource["spec"]["instanceRef"])
+    db_name = Database.name(resource)
+    users = resource["status"]["users"]
+
+    with {:instance, [{conn, _conn_args}]} <- {:instance, Instance.lookup(instance_id)},
+         {:users, axn, :ok} <- {:users, axn, drop_users(users, db_name, conn)},
+         {:database, axn, :ok} <- {:database, axn, Database.drop(db_name, conn)} do
+      {:ok, axn}
+    else
+      {:instance, []} ->
+        failure_event(axn, message: "The referenced PostgreSQL instance was not found.")
+        {:error, axn}
+
+      {:users, axn, {:error, message}} ->
+        failure_event(axn, message: message)
+        {:error, axn}
+
+      {:database, axn, {:error, message}} ->
+        failure_event(axn, message: message)
+        {:error, axn}
+    end
   end
 
   @spec apply_user_secret(
@@ -127,7 +159,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       axn
       |> Bonny.Axn.register_descendant(user_secret)
       |> Bonny.Axn.update_status(fn status ->
-        Map.update(status, "user_secrets", [status_entry], &[status_entry | &1])
+        Map.update(status, "users", [status_entry], &[status_entry | &1])
       end)
 
     {:ok, axn}
@@ -158,6 +190,20 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     end
   end
 
+  @spec drop_users(users :: list(map()), db_name :: binary(), Postgrex.conn()) ::
+          :ok | {:error, binary()}
+  defp drop_users(users, db_name, conn) do
+    %{"session_authorization" => superuser} = Postgrex.parameters(conn)
+
+    Enum.find_value(users, :ok, fn
+      %{"username" => username} ->
+        with :ok <- Privileges.revoke(username, :all, db_name, conn),
+             :ok <- User.drop(username, superuser, conn) do
+          false
+        end
+    end)
+  end
+
   @spec get_user_password(K8s.Conn.t(), namespace :: binary(), name :: binary()) :: binary()
   defp get_user_password(conn, namespace, name) do
     case K8s.Client.get("v1", "Secret", namespace: namespace, name: name)
@@ -168,14 +214,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     end
   end
 
-  @spec drop_database(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
-  def drop_database(axn) do
-    # TODO
-    {:ok, axn}
-  end
+  @spec add_finalizer?(Bonny.Axn.t()) :: boolean()
+  def add_finalizer?(%Bonny.Axn{resource: resource}) do
+    conditions =
+      resource
+      |> get_in([Access.key("status", %{}), Access.key("conditions", [])])
+      |> Map.new(&{&1["type"], &1})
 
-  @spec deletion_policy_not_abandon?(Bonny.Axn.t()) :: boolean()
-  def deletion_policy_not_abandon?(axn) do
-    axn.resource["metadata"]["annotations"]["kompost.io/deletion-policy"] != "abandon"
+    resource["metadata"]["annotations"]["kompost.io/deletion-policy"] != "abandon" and
+      conditions["Connection"]["status"] == "True"
   end
 end

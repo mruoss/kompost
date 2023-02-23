@@ -106,9 +106,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
 
       created_resource = ResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
-      assert [_ | _] = created_resource["status"]["user_secrets"]
+      assert [_ | _] = created_resource["status"]["users"]
 
-      for user_secret <- created_resource["status"]["user_secrets"] do
+      for user_secret <- created_resource["status"]["users"] do
         {:ok, %{"data" => data}} =
           K8s.Client.get("v1", "Secret", name: user_secret["secret"], namespace: "default")
           |> K8s.Client.put_conn(conn)

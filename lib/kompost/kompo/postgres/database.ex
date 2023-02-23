@@ -38,7 +38,25 @@ defmodule Kompost.Kompo.Postgres.Database do
 
   @spec exists?(db_name :: binary(), Postgrex.conn()) :: boolean()
   defp exists?(db_name, conn) do
-    result = Postgrex.query!(conn, "SELECT 1 FROM pg_database WHERE datname='#{db_name}'", [])
+    result = Postgrex.query!(conn, ~s(SELECT 1 FROM pg_database WHERE datname='#{db_name}'), [])
     result.num_rows == 1
+  end
+
+  @spec drop(db_name :: binary(), Postgrex.conn()) :: :ok | :error
+  def drop(db_name, conn) do
+    with {:ok, %Postgrex.Result{}} <-
+           Postgrex.query(conn, ~s(REVOKE CONNECT ON DATABASE "#{db_name}" FROM public), []),
+         {:ok, %Postgrex.Result{}} <-
+           Postgrex.query(
+             conn,
+             ~s|SELECT pid, pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = '#{db_name}' AND pid <> pg_backend_pid()|,
+             []
+           ),
+         {:ok, %Postgrex.Result{}} <- Postgrex.query(conn, ~s(DROP DATABASE "#{db_name}"), []) do
+      :ok
+    else
+      {:error, exception} when is_exception(exception) ->
+        {:error, Exception.message(exception)}
+    end
   end
 end

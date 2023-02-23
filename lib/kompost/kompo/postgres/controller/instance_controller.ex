@@ -6,6 +6,13 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
   alias Kompost.Kompo.Postgres.Instance
 
   step Bonny.Pluggable.SkipObservedGenerations
+
+  step Bonny.Pluggable.Finalizer,
+    id: "kompost.io/databases",
+    impl: &__MODULE__.check_for_depending_databases/1,
+    add_to_resource: true,
+    log_level: :debug
+
   step Kompost.Pluggable.InitConditions, conditions: ["Credentials", "Connected", "Privileged"]
   step :handle_event
 
@@ -85,6 +92,30 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
       password = Base.decode64!(secret["data"][key])
       instance = put_in(instance, ~w(spec plainPassword), password)
       get_connection_args(instance, conn)
+    end
+  end
+
+  @doc """
+  A finalizer preventing the deletion of an instance if there are database
+  resources in the cluster which still depend on it.
+  """
+  @spec check_for_depending_databases(Bonny.Axn.t()) ::
+          {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
+  def check_for_depending_databases(%Bonny.Axn{resource: resource, conn: conn} = axn) do
+    {:ok, result} =
+      K8s.Client.list("kompost.io/v1alpha1", "PostgresDatabase", namespace: :all)
+      |> K8s.Client.put_conn(conn)
+      |> K8s.Client.run()
+
+    if Enum.any?(
+         result["items"],
+         &(is_nil(&1["metadata"]["deletionTimestamp"]) &&
+             &1["spec"]["instanceRef"]["name"] == resource["metadata"]["name"] and
+             &1["spec"]["instanceRef"]["namespace"] == resource["metadata"]["namespace"])
+       ) do
+      {:error, axn}
+    else
+      {:ok, axn}
     end
   end
 end

@@ -33,7 +33,7 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
             :properties:
               sql_db_name:
                 type: string
-              user_secrets:
+              users:
                 type: array
                 items:
                   type: object
