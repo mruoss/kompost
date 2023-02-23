@@ -56,7 +56,8 @@ defmodule Kompost.Kompo.Postgres.Instance do
       {"default", "foo-bar"}
   """
   @spec get_id(resource :: map()) :: id()
-  def get_id(resource), do: {resource["metadata"]["namespace"], resource["metadata"]["name"]}
+  def get_id(%{"metadata" => metadata}), do: {metadata["namespace"], metadata["name"]}
+  def get_id(reference), do: {reference["namespace"], reference["name"]}
 
   @doc """
   Checks if the user connected to the given `conn` has all the privileges

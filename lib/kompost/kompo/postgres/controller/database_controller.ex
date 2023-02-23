@@ -12,6 +12,13 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   import YamlElixir.Sigil
 
   step Bonny.Pluggable.SkipObservedGenerations
+
+  step Bonny.Pluggable.Finalizer,
+    id: "kompost.io/database",
+    impl: &__MODULE__.drop_database/1,
+    add_to_resource: &__MODULE__.deletion_policy_not_abandon?/1,
+    log_level: :debug
+
   step Kompost.Pluggable.InitConditions, conditions: ["Connection", "AppUser", "InspectorUser"]
   step :handle_event
 
@@ -24,7 +31,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
     resource = axn.resource
-    instance_id = Instance.get_id(resource)
+    instance_id = Instance.get_id(resource["spec"]["instanceRef"])
     db_name = Database.name(resource)
 
     with {:instance, [{conn, conn_args}]} <- {:instance, Instance.lookup(instance_id)},
@@ -34,6 +41,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              "Connection",
              true,
              "Connected to the referenced PostgreSQL instance."
+           ),
+         {:database, axn, :ok} <- {:database, axn, Database.apply(db_name, conn)},
+         axn <-
+           set_condition(
+             axn,
+             "Database",
+             true,
+             ~s(The database "#{db_name}" was created on the PostgreSQL instance)
            ),
          {:app_user, {:ok, axn}} <-
            {:app_user, apply_user("app", :read_write, axn, conn, conn_args, db_name)},
@@ -62,6 +77,11 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
         |> failure_event(message: message)
         |> set_condition("Connection", false, message)
 
+      {:database, axn, {:error, message}} ->
+        axn
+        |> failure_event(message: message)
+        |> set_condition("Database", false, message)
+
       {:app_user, {:error, axn, message}} ->
         axn
         |> failure_event(message: message)
@@ -88,26 +108,26 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     data =
       Map.merge(user_env, %{
         DB_HOST: Keyword.fetch!(conn_args, :hostname),
-        DB_PORT: Keyword.fetch!(conn_args, :port)
+        DB_PORT: "#{Keyword.fetch!(conn_args, :port)}"
       })
 
     user_secret =
       ~y"""
       apiVersion: v1
-      kind: secret
+      kind: Secret
       metadata:
           namespace: #{K8s.Resource.FieldAccessors.namespace(axn.resource)}
           name: #{secret_name}
       """
       |> Map.put("stringData", data)
 
-    status_entry = %{"username" => user_env["DB_USER"], "secret" => secret_name}
+    status_entry = %{"username" => user_env[:DB_USER], "secret" => secret_name}
 
     axn =
       axn
       |> Bonny.Axn.register_descendant(user_secret)
       |> Bonny.Axn.update_status(fn status ->
-        Map.update(status, "secrets", [status_entry], &[status_entry | &1])
+        Map.update(status, "user_secrets", [status_entry], &[status_entry | &1])
       end)
 
     {:ok, axn}
@@ -126,10 +146,11 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource_namespace = K8s.Resource.FieldAccessors.namespace(axn.resource)
     secret_name = Slugger.slugify_downcase("psql-#{resource_name}-#{username}", ?-)
     password = get_user_password(axn.conn, resource_namespace, secret_name)
+    %{"session_authorization" => superuser} = Postgrex.parameters(conn)
 
     with {:ok, user_env} <- User.apply(username, conn, db_name, password),
-         :ok <- Privileges.grant(user_env["DB_USER"], "CURRENT_USER", conn),
-         :ok <- Privileges.grant(user_env["DB_USER"], user_access, db_name, conn) do
+         :ok <- Privileges.grant(user_env[:DB_USER], superuser, conn),
+         :ok <- Privileges.grant(user_env[:DB_USER], user_access, db_name, conn) do
       apply_user_secret(axn, secret_name, user_env, conn_args)
     else
       {:error, error} ->
@@ -145,5 +166,16 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       {:ok, secret} -> secret["data"]["DB_PASS"] |> Base.decode64!()
       {:error, _} -> Password.random_string()
     end
+  end
+
+  @spec drop_database(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
+  def drop_database(axn) do
+    # TODO
+    {:ok, axn}
+  end
+
+  @spec deletion_policy_not_abandon?(Bonny.Axn.t()) :: boolean()
+  def deletion_policy_not_abandon?(axn) do
+    axn.resource["metadata"]["annotations"]["kompost.io/deletion-policy"] != "abandon"
   end
 end

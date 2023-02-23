@@ -3,40 +3,9 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   import YamlElixir.Sigil
 
+  alias Kompost.Test.Kompo.Postgres.ResourceHelper
+
   @resource_label %{"test" => "postgres-instance-controller-integration"}
-
-  @spec resource(name :: binary()) :: map()
-  defp resource(name) do
-    ~y"""
-    apiVersion: kompost.io/v1alpha1
-    kind: PostgresInstance
-    metadata:
-      name: #{name}
-      namespace: default
-    spec:
-      hostname: 127.0.0.1
-      port: #{System.fetch_env!("EXPOSED_PORT")}
-      username: #{System.fetch_env!("POSTGRES_USER")}
-    """
-    |> put_in(~w(metadata labels), @resource_label)
-  end
-
-  @spec resource_with_secret_ref(name :: binary()) :: map()
-  defp resource_with_secret_ref(name) do
-    name
-    |> resource()
-    |> put_in(~w(spec passwordSecretRef), %{
-      "name" => name,
-      "key" => System.fetch_env!("POSTGRES_PASSWORD")
-    })
-  end
-
-  @spec resource_with_plain_pw(name :: binary(), password :: binary()) :: map()
-  defp resource_with_plain_pw(name, password \\ System.fetch_env!("POSTGRES_PASSWORD")) do
-    name
-    |> resource()
-    |> put_in(~w(spec plainPassword), password)
-  end
 
   @spec password_secret(name :: binary()) :: map()
   defp password_secret(name) do
@@ -91,7 +60,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       resource_name: resource_name
     } do
       assert {:ok, created_resource} =
-               resource_with_secret_ref(resource_name)
+               resource_name
+               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -127,7 +97,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       assert {:ok, created_resource} =
-               resource_with_secret_ref(resource_name)
+               resource_name
+               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -157,7 +128,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       resource_name: resource_name
     } do
       assert {:ok, created_resource} =
-               resource_with_plain_pw(resource_name)
+               resource_name
+               |> ResourceHelper.instance_with_plain_pw(labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -195,7 +167,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       assert {:ok, created_resource} =
-               resource_with_secret_ref(resource_name)
+               resource_name
+               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -225,7 +198,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       resource_name: resource_name
     } do
       assert {:ok, created_resource} =
-               resource_with_plain_pw(resource_name, "wrong_password")
+               resource_name
+               |> ResourceHelper.instance_with_plain_pw("wrong_password", labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -263,7 +237,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       assert {:ok, created_resource} =
-               resource_with_secret_ref(resource_name)
+               resource_name
+               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
                |> K8s.Client.apply()
                |> K8s.Client.put_conn(conn)
                |> K8s.Client.run()
@@ -285,35 +260,5 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Privileged"]["status"]
     end
-
-    # @tag :integration
-    # test "Connected condition status is false if arguments are incorrect", %{
-    #   conn: conn,
-    #   timeout: timeout,
-    #   resource_name: resource_name
-    # } do
-    #   assert {:ok, created_resource} =
-    #            resource_with_plain_pw(resource_name, "wrong_password")
-    #            |> K8s.Client.apply()
-    #            |> K8s.Client.put_conn(conn)
-    #            |> K8s.Client.run()
-
-    #   get_op =
-    #     K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
-    #       name: resource_name,
-    #       namespace: "default"
-    #     )
-    #     |> K8s.Client.put_conn(conn)
-
-    #   {:ok, created_resource} =
-    #     K8s.Client.wait_until(get_op,
-    #       find: ["status", "observedGeneration"],
-    #       eval: created_resource["metadata"]["generation"],
-    #       timeout: timeout
-    #     )
-
-    #   conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-    #   assert "False" == conditions["Connected"]["status"]
-    # end
   end
 end

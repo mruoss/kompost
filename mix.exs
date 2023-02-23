@@ -41,7 +41,7 @@ defmodule Kompost.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bonny, github: "coryodaniel/bonny", branch: "master"},
+      {:bonny, "~> 1.1"},
       {:jason, "~> 1.0"},
       {:postgrex, "~> 0.16.0"},
       {:slugger, "~> 0.3.0"},

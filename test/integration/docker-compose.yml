@@ -10,3 +10,9 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
       - ${EXPOSED_PORT}:5432
+
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 8080:8080
