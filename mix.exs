@@ -41,9 +41,12 @@ defmodule Kompost.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
+      # {:bonny, "~> 1.1"},
+      # {:bonny, path: "/Users/mruoss/src/community/bonny"},
       {:bonny, github: "coryodaniel/bonny", branch: "master"},
       {:jason, "~> 1.0"},
       {:postgrex, "~> 0.16.0"},
+      {:slugger, "~> 0.3.0"},
 
       # Dev dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
