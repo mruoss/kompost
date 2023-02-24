@@ -42,10 +42,19 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set Vars
+        run: |
+          TAG=${{ github.ref_name }}
+          OTP_VERSION=${{ steps.beam.outputs.otp-version }}
+
+          echo "DOCKER_TAG_VERSION=${TAG#v}" >> $GITHUB_ENV
+          echo "ERLANG_DOCKER_IMAGE_VERSION=${OTP_VERSION#OTP-}" >> $GITHUB_ENV
+
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: mruoss/kompost:${{vars.GITHUB_REF_NAME}}
+          context: ./dockerbuild
+          tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ matrix.arch }}
           build-args: |
-            ERLANG_IMAGE_TAG=${{matrix.otp}}-${{matrix.arch}}
+            ERLANG_IMAGE_TAG=${{ env.ERLANG_DOCKER_IMAGE_VERSION }}-${{ matrix.arch }}
