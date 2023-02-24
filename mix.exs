@@ -61,8 +61,7 @@ defmodule Kompost.MixProject do
     [
       kompost: [
         include_erts: false,
-        include_executables_for: [:unix],
-        path: "dockerbuild/rel"
+        include_executables_for: [:unix]
       ]
     ]
   end

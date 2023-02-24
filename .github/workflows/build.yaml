@@ -8,33 +8,17 @@ on:
 env:
   MIX_ENV: prod
   KUBECONFIG: /home/runner/.kube/config
+  ELIXIR_IMAGE_VERSION: 1.14.3
+  ERLANG_IMAGE_VERSION: 24.3.4.9
 
 jobs:
   build_release:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        elixir: [1.14.x]
-        otp: [25.x]
-        arch: [alpine]
+        arch: [alpine-3.17.2]
     steps:
       - uses: actions/checkout@v3
-
-      - name: Setup elixir
-        id: beam
-        uses: erlef/setup-beam@v1
-        with:
-          elixir-version: ${{matrix.elixir}}
-          otp-version: ${{matrix.otp}}
-
-      - name: Build Release
-        run: |
-          mix local.rebar --force
-          mix local.hex --force
-          mix deps.get
-          mix deps.clean --unused
-          mix compile --warnings-as-errors
-          mix release --overwrite --quiet
 
       - name: Login to Docker Hub
         uses: docker/login-action@v2
@@ -42,19 +26,26 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
       - name: Set Vars
         run: |
           TAG=${{ github.ref_name }}
-          OTP_VERSION=${{ steps.beam.outputs.otp-version }}
+          ARCH=${{ matrix.arch }}
 
           echo "DOCKER_TAG_VERSION=${TAG#v}" >> $GITHUB_ENV
-          echo "ERLANG_DOCKER_IMAGE_VERSION=${OTP_VERSION#OTP-}" >> $GITHUB_ENV
+          echo "DOCKER_TAG_ARCH=${ARCH%%-*}" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           push: true
-          context: ./dockerbuild
-          tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ matrix.arch }}
+          tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ env.DOCKER_TAG_ARCH }}
+          platforms: linux/amd64,linux/arm64/v8
           build-args: |
-            ERLANG_IMAGE_TAG=${{ env.ERLANG_DOCKER_IMAGE_VERSION }}-${{ matrix.arch }}
+            ERLANG_IMAGE_TAG=${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
+            ELIXIR_IMAGE_TAG=${{ env.ELIXIR_IMAGE_VERSION }}-erlang-${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
