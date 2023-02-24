@@ -11,7 +11,7 @@ defmodule Kompost.Kompo do
   end
 
   def get_enabled_kompos(_env) do
-    config = Application.get_env(:kompost, __MODULE__, %{}) |> dbg
+    config = Application.get_env(:kompost, __MODULE__, %{})
     Enum.filter(@kompos, &config[&1])
   end
 end
