@@ -11,6 +11,7 @@ env:
 
 jobs:
   code-quality:
+    name: Code Quality
     runs-on: ubuntu-latest
     strategy:
       matrix:

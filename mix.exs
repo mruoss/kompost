@@ -10,7 +10,8 @@ defmodule Kompost.MixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: cli_env(),
-      test_coverage: [tool: ExCoveralls]
+      test_coverage: [tool: ExCoveralls],
+      releases: releases()
     ]
   end
 
@@ -41,9 +42,9 @@ defmodule Kompost.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      # {:bonny, "~> 1.1"},
+      {:bonny, "~> 1.1"},
       # {:bonny, path: "/Users/mruoss/src/community/bonny"},
-      {:bonny, github: "coryodaniel/bonny", branch: "master"},
+      # {:bonny, github: "coryodaniel/bonny", branch: "master"},
       {:jason, "~> 1.0"},
       {:postgrex, "~> 0.16.0"},
       {:slugger, "~> 0.3.0"},
@@ -53,6 +54,16 @@ defmodule Kompost.MixProject do
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:dotenv_parser, "~> 2.0", only: [:dev, :test], runtime: false},
       {:excoveralls, "~> 0.15.3", only: :test}
+    ]
+  end
+
+  defp releases do
+    [
+      kompost: [
+        include_erts: false,
+        include_executables_for: [:unix],
+        path: "dockerbuild/rel"
+      ]
     ]
   end
 end

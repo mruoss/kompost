@@ -11,13 +11,12 @@ defmodule Kompost.Application do
   end
 
   @spec kompos(atom()) :: list({module(), term()})
-  defp kompos(env) when env in [:dev, :test] do
-    [{Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(env)]}]
-  end
-
-  defp kompos(_) do
-    # TODO
-    []
+  defp kompos(env) do
+    env
+    |> Kompost.Kompo.get_enabled_kompos()
+    |> Enum.map(fn :postgres ->
+      {Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(env)]}
+    end)
   end
 
   @spec conn(atom()) :: K8s.Conn.t()

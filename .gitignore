@@ -26,3 +26,5 @@ kompost-*.tar
 /tmp/
 
 /test/integration/cluster*.yaml
+
+/dockerbuild/rel/
