@@ -28,5 +28,8 @@ defmodule Kompost.K8sConn do
     struct!(conn, insecure_skip_tls_verify: true)
   end
 
-  def get!(_), do: K8s.Conn.from_service_account()
+  def get!(_) do
+    {:ok, conn} = K8s.Conn.from_service_account()
+    conn
+  end
 end
