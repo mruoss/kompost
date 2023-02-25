@@ -36,19 +36,19 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Set Vars
+      - name: Prepare variables
+        id: prepare_vars
         run: |
           TAG=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
 
-          echo "DOCKER_TAG_VERSION=${TAG#v}" >> $GITHUB_ENV
-          echo "DOCKER_TAG_ARCH=${ARCH%%-*}" >> $GITHUB_ENV
+          echo "docker_image=mruoss/kompost:${TAG#v}-${ARCH%%-*}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v4
         with:
           push: true
-          tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ env.DOCKER_TAG_ARCH }}
+          tags: ${{ steps.prepare_vars.outputs.docker_image }}
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           build-args: |
             ERLANG_IMAGE=${{ env.ERLANG_IMAGE }}-${{ matrix.arch }}
@@ -85,7 +85,7 @@ jobs:
 
       - name: build manifest
         run: |
-          mix bonny.gen.manifest -o manifest-${{ matrix.arch }}.yaml
+          mix bonny.gen.manifest --image ${{ steps.prepare_vars.outputs.docker_image }} --namespace kompost -o manifest-${{ matrix.arch }}.yaml
 
       - name: upload manifest as artifact
         uses: actions/upload-release-asset@v1
