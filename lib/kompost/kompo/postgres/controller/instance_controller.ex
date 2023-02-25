@@ -8,7 +8,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
   step Bonny.Pluggable.SkipObservedGenerations
 
   step Bonny.Pluggable.Finalizer,
-    id: "kompost.io/databases",
+    id: "kompost.chuge.li/databases",
     impl: &__MODULE__.check_for_depending_databases/1,
     add_to_resource: true,
     log_level: :debug
@@ -103,7 +103,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
           {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
   def check_for_depending_databases(%Bonny.Axn{resource: resource, conn: conn} = axn) do
     {:ok, result} =
-      K8s.Client.list("kompost.io/v1alpha1", "PostgresDatabase", namespace: :all)
+      K8s.Client.list("kompost.chuge.li/v1alpha1", "PostgresDatabase", namespace: :all)
       |> K8s.Client.put_conn(conn)
       |> K8s.Client.run()
 

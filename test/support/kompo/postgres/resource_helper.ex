@@ -6,7 +6,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
   @spec instance(name :: binary(), opts :: Keyword.t()) :: map()
   def instance(name, opts) do
     ~y"""
-    apiVersion: kompost.io/v1alpha1
+    apiVersion: kompost.chuge.li/v1alpha1
     kind: PostgresInstance
     metadata:
       name: #{name}
@@ -40,7 +40,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
   @spec database(name :: binary(), instance :: map(), opts :: Keyword.t()) :: map()
   def database(name, instance, opts) do
     ~y"""
-    apiVersion: kompost.io/v1alpha1
+    apiVersion: kompost.chuge.li/v1alpha1
     kind: PostgresDatabase
     metadata:
       name: #{name}

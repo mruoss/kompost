@@ -33,7 +33,9 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       selector = K8s.Selector.label(@resource_label)
 
       {:ok, _} =
-        K8s.Client.delete_all("kompost.io/v1alpha1", "PostgresInstance", namespace: "default")
+        K8s.Client.delete_all("kompost.chuge.li/v1alpha1", "PostgresInstance",
+          namespace: "default"
+        )
         |> K8s.Operation.put_selector(selector)
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
@@ -67,7 +69,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )
@@ -104,7 +106,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )
@@ -135,7 +137,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )
@@ -174,7 +176,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )
@@ -205,7 +207,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )
@@ -244,7 +246,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
                |> K8s.Client.run()
 
       get_op =
-        K8s.Client.get("kompost.io/v1alpha1", "PostgresInstance",
+        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
           name: resource_name,
           namespace: "default"
         )

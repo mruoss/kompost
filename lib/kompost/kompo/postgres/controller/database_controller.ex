@@ -16,7 +16,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   step Kompost.Pluggable.InitConditions, conditions: ["Connection", "AppUser", "InspectorUser"]
 
   step Bonny.Pluggable.Finalizer,
-    id: "kompost.io/delete-resources",
+    id: "kompost.chuge.li/delete-resources",
     impl: &__MODULE__.delete_resources/1,
     add_to_resource: &__MODULE__.add_finalizer?/1,
     log_level: :debug
@@ -221,7 +221,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       |> get_in([Access.key("status", %{}), Access.key("conditions", [])])
       |> Map.new(&{&1["type"], &1})
 
-    resource["metadata"]["annotations"]["kompost.io/deletion-policy"] != "abandon" and
+    resource["metadata"]["annotations"]["kompost.chuge.li/deletion-policy"] != "abandon" and
       conditions["Connection"]["status"] == "True"
   end
 end

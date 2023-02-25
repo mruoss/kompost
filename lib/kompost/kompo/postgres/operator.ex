@@ -18,14 +18,14 @@ defmodule Kompost.Kompo.Postgres.Operator do
     [
       %{
         query:
-          K8s.Client.watch("kompost.io/v1alpha1", "PostgresInstance",
+          K8s.Client.watch("kompost.chuge.li/v1alpha1", "PostgresInstance",
             namespace: watching_namespace
           ),
         controller: Controller.InstanceController
       },
       %{
         query:
-          K8s.Client.watch("kompost.io/v1alpha1", "PostgresDatabase",
+          K8s.Client.watch("kompost.chuge.li/v1alpha1", "PostgresDatabase",
             namespace: watching_namespace
           ),
         controller: Controller.DatabaseController
@@ -37,13 +37,13 @@ defmodule Kompost.Kompo.Postgres.Operator do
   def crds() do
     [
       %Bonny.API.CRD{
-        group: "kompost.io",
+        group: "kompost.chuge.li",
         scope: :Namespaced,
         names: Bonny.API.CRD.kind_to_names("PostgresInstance", ["pginst"]),
         versions: [V1Alpha1.PostgresInstance]
       },
       %Bonny.API.CRD{
-        group: "kompost.io",
+        group: "kompost.chuge.li",
         scope: :Namespaced,
         names: Bonny.API.CRD.kind_to_names("PostgresDatabase", ["pgdb"]),
         versions: [V1Alpha1.PostgresDatabase]
