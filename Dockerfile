@@ -1,11 +1,11 @@
 
-ARG ERLANG_IMAGE_TAG
-ARG ELIXIR_IMAGE_TAG
+ARG ERLANG_IMAGE
+ARG ELIXIR_IMAGE
 #########################
 ###### Build Image ######
 #########################
 
-FROM --platform=$BUILDPLATFORM hexpm/elixir:${ELIXIR_IMAGE_TAG} as builder
+FROM --platform=$BUILDPLATFORM ${ELIXIR_IMAGE} as builder
 
 ENV MIX_ENV=prod \
   MIX_HOME=/opt/mix \
@@ -32,7 +32,7 @@ RUN mix release
 ##### Release Image #####
 #########################
 
-FROM --platform=$BUILDPLATFORM hexpm/erlang:${ERLANG_IMAGE_TAG}
+FROM --platform=$BUILDPLATFORM ${ERLANG_IMAGE}
 
 # elixir expects utf8.
 ENV LANG=C.UTF-8

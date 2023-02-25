@@ -8,15 +8,15 @@ on:
 env:
   MIX_ENV: prod
   KUBECONFIG: /home/runner/.kube/config
-  ELIXIR_IMAGE_VERSION: 1.14.3
-  ERLANG_IMAGE_VERSION: 24.3.4.9
+  ELIXIR_IMAGE: elixir:1.14.3-otp-24
+  ERLANG_IMAGE: erlang:24.3.4.7
 
 jobs:
   build_release:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        arch: [alpine-3.17.2]
+        arch: [alpine]
     steps:
       - uses: actions/checkout@v3
 
@@ -45,7 +45,7 @@ jobs:
         with:
           push: true
           tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ env.DOCKER_TAG_ARCH }}
-          platforms: linux/amd64,linux/arm64/v8
+          platforms: linux/amd64,linux/arm64/v8,linux/arm
           build-args: |
             ERLANG_IMAGE_TAG=${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
             ELIXIR_IMAGE_TAG=${{ env.ELIXIR_IMAGE_VERSION }}-erlang-${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
