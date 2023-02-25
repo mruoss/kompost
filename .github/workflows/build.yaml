@@ -62,27 +62,31 @@ jobs:
         uses: actions/create-release@v1
         id: create_release
         with:
-          draft: true
+          draft: false
           prerelease: false
           release_name: ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
           body_path: release_nots.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
       - name: Setup elixir
         id: beam
         uses: erlef/setup-beam@v1
         with:
           elixir-version: 1.14.x
           otp-version: 25.x
+
       - name: Install Mix Dependencies
         run: |
           mix local.rebar --force
           mix local.hex --force
           mix deps.get
+
       - name: build manifest
         run: |
           mix bonny.gen.manifest -o manifest-${{ matrix.arch }}.yaml
+
       - name: upload manifest as artifact
         uses: actions/upload-release-asset@v1
         env:
