@@ -47,5 +47,39 @@ jobs:
           tags: mruoss/kompost:${{ env.DOCKER_TAG_VERSION }}-${{ env.DOCKER_TAG_ARCH }}
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           build-args: |
-            ERLANG_IMAGE_TAG=${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
-            ELIXIR_IMAGE_TAG=${{ env.ELIXIR_IMAGE_VERSION }}-erlang-${{ env.ERLANG_IMAGE_VERSION }}-${{ matrix.arch }}
+            ERLANG_IMAGE=${{ env.ERLANG_IMAGE }}-${{ matrix.arch }}
+            ELIXIR_IMAGE=${{ env.ELIXIR_IMAGE }}-${{ matrix.arch }}
+      - name: release
+        uses: actions/create-release@v1
+        id: create_release
+        with:
+          draft: true
+          prerelease: false
+          release_name: ${{ env.DOCKER_TAG_VERSION }}
+          tag_name: ${{ github.ref }}
+          body_path: CHANGELOG.md
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+      - name: Setup elixir
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: 1.14.x
+          otp-version: 25.x
+      - name: Install Mix Dependencies
+        run: |
+          mix local.rebar --force
+          mix local.hex --force
+          mix deps.get
+      - name: build manifest
+        run: |
+          mix bonny.gen.manifest -o manifest-${{ matrix.arch }}.yaml
+      - name: upload manifest as artifact
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./manifest-${{ matrix.arch }}.yaml
+          asset_name: manifest-${{ matrix.arch }}.yaml
+          asset_content_type: application/yaml
