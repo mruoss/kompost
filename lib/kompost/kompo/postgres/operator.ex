@@ -3,7 +3,7 @@ defmodule Kompost.Kompo.Postgres.Operator do
   This operator handles resources regarding postgres instances and databases.
   """
 
-  use Bonny.Operator, default_watch_namespace: "default"
+  use Bonny.Operator, default_watch_namespace: :all
 
   alias Kompost.Kompo.Postgres.Controller
   alias Kompost.Kompo.Postgres.V1Alpha1
