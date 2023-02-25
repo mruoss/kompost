@@ -19,6 +19,25 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
 
   @spec override(Bonny.Resource.t()) :: Bonny.Resource.t()
 
+  def override(%{kind: "CustomResourceDefinition"} = resource) do
+    resource
+    |> Map.update!(:metadata, fn
+      %{:labels => labels} = metadata when labels == %{} -> Map.delete(metadata, :labels)
+      metadata -> metadata
+    end)
+    |> update_in([:spec, :versions, Access.all()], fn
+      version ->
+        version
+        |> Map.from_struct()
+        |> Enum.reject(fn
+          {:additionalPrinterColumns, []} -> true
+          {:deprecated, false} -> true
+          _ -> false
+        end)
+        |> Map.new()
+    end)
+  end
+
   # fallback
   def override(resource), do: resource
 end
