@@ -5,3 +5,5 @@ config :logger,
     [library: :k8s],
     [library: :bonny]
   ]
+
+import_config "bonny.exs"
