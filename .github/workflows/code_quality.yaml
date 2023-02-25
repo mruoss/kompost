@@ -8,6 +8,8 @@ on:
 env:
   MIX_ENV: test
   KUBECONFIG: /home/runner/.kube/config
+  ELIXIR_VERSION: 1.14.x
+  OTP_VERSION: 25.x
 
 jobs:
   code-quality:
@@ -16,8 +18,6 @@ jobs:
     strategy:
       matrix:
         k8s_version: [v1.26.0]
-        elixir: [1.14.x]
-        otp: [25.x]
     steps:
       - uses: actions/checkout@v3
       - uses: isbang/compose-action@v1.4.1
@@ -35,8 +35,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: ${{matrix.elixir}}
-          otp-version: ${{matrix.otp}}
+          elixir-version: ${{ env.ELIXIR_VERSION }}
+          otp-version: ${{ env.OTP_VERSION }}
 
       - name: Retrieve Build Cache
         uses: actions/cache@v3
