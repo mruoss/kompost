@@ -30,6 +30,7 @@ defmodule Kompost.K8sConn do
 
   def get!(_) do
     {:ok, conn} = K8s.Conn.from_service_account()
-    conn
+    # make this configurable?
+    struct!(conn, insecure_skip_tls_verify: true)
   end
 end
