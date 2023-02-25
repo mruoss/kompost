@@ -5,6 +5,10 @@ on:
   push:
     tags: [v*]
 
+permissions:
+  contents: write
+  checks: read
+
 env:
   MIX_ENV: prod
   KUBECONFIG: /home/runner/.kube/config
@@ -49,15 +53,20 @@ jobs:
           build-args: |
             ERLANG_IMAGE=${{ env.ERLANG_IMAGE }}-${{ matrix.arch }}
             ELIXIR_IMAGE=${{ env.ELIXIR_IMAGE }}-${{ matrix.arch }}
+      - name: Prepare release notes
+        run: |
+          csplit -s CHANGELOG.md "/##/" {1}
+          cat xx01 > release_nots.md
+
       - name: release
         uses: actions/create-release@v1
         id: create_release
         with:
           draft: true
           prerelease: false
-          release_name: ${{ env.DOCKER_TAG_VERSION }}
+          release_name: ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
-          body_path: CHANGELOG.md
+          body_path: release_nots.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
       - name: Setup elixir
