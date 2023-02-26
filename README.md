@@ -159,3 +159,24 @@ Status:
     Secret:    psql-test-app
     Username:  default_test_app
 ```
+
+## Deletion Policy - Abandoning Underlying Resources
+
+When using Kompost on a live environment, you might want to protect the
+underlying resources (i.e. the databases, users, etc.) from accidental deletion
+if the Kubernetes resource gets deleted. That's the purpose of the
+`kompost.chuge.li/deletion-policy` annotation. Being set to `abandon`, it prevents
+Kompost form adding the finalizers to your resource.
+
+```yaml
+apiVersion: kompost.chuge.li/v1alpha1
+kind: PostgresDatabase
+metadata:
+  name: staging
+  namespace: awesome-application
+  annotations:
+    kompost.chuge.li/deletion-policy: abandon # <-- underlying resources are abandoned (not deleted) when this resource gets deleted
+spec:
+  instanceRef:
+    name: app-database
+```
