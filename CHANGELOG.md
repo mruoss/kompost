@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Upgreaded `bonny` to 2.1.0
+- Upgreaded `bonny` to v1.1.1
 
 ## [0.1.3] - 2023-02-25
 
