@@ -43,11 +43,16 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
         |> set_condition("Credentials", false, Exception.message(error))
 
       {:conn, axn, {:error, error}} ->
+        message = Exception.message(error)
+        Logger.warn("#{axn.action} failed. #{message}")
+
         axn
-        |> failure_event(message: Exception.message(error))
-        |> set_condition("Connected", false, Exception.message(error))
+        |> failure_event(message: message)
+        |> set_condition("Connected", false, message)
 
       {:privileges, {:error, message}} ->
+        Logger.warn("#{axn.action} failed. #{message}")
+
         axn
         |> failure_event(message: message)
         |> set_condition("Privileged", false, message)

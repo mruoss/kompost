@@ -32,8 +32,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
     resource = axn.resource
-    instance_id = Instance.get_id(resource["spec"]["instanceRef"])
     db_name = Database.name(resource)
+
+    instance_id =
+      resource["spec"]["instanceRef"]
+      |> Map.put_new("namespace", resource["metadata"]["namespace"])
+      |> Instance.get_id()
 
     with {:instance, [{conn, conn_args}]} <- {:instance, Instance.lookup(instance_id)},
          axn <-
@@ -51,6 +55,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              ~s(The database "#{db_name}" was created on the PostgreSQL instance)
            ),
+         axn <- Bonny.Axn.update_status(axn, &Map.put(&1, "sql_db_name", db_name)),
          {:app_user, {:ok, axn}} <-
            {:app_user, apply_user("app", :read_write, axn, conn, conn_args, db_name)},
          axn <-
@@ -73,22 +78,29 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     else
       {:instance, []} ->
         message = "The referenced PostgreSQL instance was not found."
+        Logger.warn("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
         |> set_condition("Connection", false, message)
 
       {:database, axn, {:error, message}} ->
+        Logger.warn("#{axn.action} failed. #{message}")
+
         axn
         |> failure_event(message: message)
         |> set_condition("Database", false, message)
 
       {:app_user, {:error, axn, message}} ->
+        Logger.warn("#{axn.action} failed. #{message}")
+
         axn
         |> failure_event(message: message)
         |> set_condition("AppUser", false, message)
 
       {:inspector_user, {:error, axn, message}} ->
+        Logger.warn("#{axn.action} failed. #{message}")
+
         axn
         |> failure_event(message: message)
         |> set_condition("InspectorUser", false, message)
@@ -107,9 +119,13 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   @spec delete_resources(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
   def delete_resources(axn) do
     resource = axn.resource
-    instance_id = Instance.get_id(resource["spec"]["instanceRef"])
     db_name = Database.name(resource)
     users = resource["status"]["users"]
+
+    instance_id =
+      resource["spec"]["instanceRef"]
+      |> Map.put_new("namespace", resource["metadata"]["namespace"])
+      |> Instance.get_id()
 
     with {:instance, [{conn, _conn_args}]} <- {:instance, Instance.lookup(instance_id)},
          {:users, axn, :ok} <- {:users, axn, drop_users(users, db_name, conn)},
@@ -117,14 +133,17 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       {:ok, axn}
     else
       {:instance, []} ->
+        Logger.warn("Failed to finalize. The referenced PostgreSQL instance was not found.")
         failure_event(axn, message: "The referenced PostgreSQL instance was not found.")
         {:error, axn}
 
       {:users, axn, {:error, message}} ->
+        Logger.warn("Failed to finalize. #{message}")
         failure_event(axn, message: message)
         {:error, axn}
 
       {:database, axn, {:error, message}} ->
+        Logger.warn("Failed to finalize. #{message}")
         failure_event(axn, message: message)
         {:error, axn}
     end
@@ -153,13 +172,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       """
       |> Map.put("stringData", data)
 
-    status_entry = %{"username" => user_env[:DB_USER], "secret" => secret_name}
+    username = user_env[:DB_USER]
+    status_entry = %{"username" => username, "secret" => secret_name}
 
     axn =
       axn
       |> Bonny.Axn.register_descendant(user_secret)
       |> Bonny.Axn.update_status(fn status ->
-        Map.update(status, "users", [status_entry], &[status_entry | &1])
+        Map.update(status, "users", [status_entry], &Enum.uniq([status_entry | &1]))
       end)
 
     {:ok, axn}
@@ -195,7 +215,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   defp drop_users(users, db_name, conn) do
     %{"session_authorization" => superuser} = Postgrex.parameters(conn)
 
-    Enum.find_value(users, :ok, fn
+    users
+    |> Enum.uniq()
+    |> Enum.find_value(:ok, fn
       %{"username" => username} ->
         with :ok <- Privileges.revoke(username, :all, db_name, conn),
              :ok <- User.drop(username, superuser, conn) do
