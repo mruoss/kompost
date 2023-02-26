@@ -8,6 +8,9 @@ Kubernetes to give their development teams a way to create certain
 infrastructure resources by applying Kubernetes resources to their clusters or
 committing to their infra repo when using ArgoCD.
 
+Kompost was written in Elixir, using [`bonny`](https://hexdocs.pm/bonny), a Kubernetes development
+framework written in Elixir.
+
 ## Usage Example
 
 If you're in charge of managing infrastructure like setting up and maintaining
