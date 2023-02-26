@@ -42,7 +42,15 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
                       type: string
                     secret:
                       type: string
-      """a
+      """a,
+      additionalPrinterColumns: [
+        %{
+          name: "Postgres DB name",
+          type: "string",
+          description: "Name of the database on the Postgres instance",
+          jsonPath: ".status.sql_db_name"
+        }
+      ]
     )
     |> add_observed_generation_status()
     |> add_conditions()
