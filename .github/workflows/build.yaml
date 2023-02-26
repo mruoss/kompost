@@ -55,7 +55,7 @@ jobs:
             ELIXIR_IMAGE=${{ env.ELIXIR_IMAGE }}${{ matrix.arch }}
       - name: Prepare release notes
         run: |
-          csplit -s CHANGELOG.md "/##/" {1}
+          csplit -s CHANGELOG.md "/^## /" {1}
           cat xx01 > release_nots.md
 
       - name: release
