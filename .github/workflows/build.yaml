@@ -41,6 +41,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
+      - name: push README to Dockerhub
+        uses: christian-korneck/update-container-description-action@v1
+        env:
+          DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
+        with:
+          destination_container_repo: mruoss/kompost
+          provider: dockerhub
+          short_description: "Kubernetes operator providing self-service management for developers"
+          readme_file: "README.md"
+
   build_release:
     runs-on: ubuntu-latest
     needs: [create_gh_release]
@@ -79,6 +90,7 @@ jobs:
           build-args: |
             ERLANG_IMAGE=${{ env.ERLANG_IMAGE }}${{ matrix.arch }}
             ELIXIR_IMAGE=${{ env.ELIXIR_IMAGE }}${{ matrix.arch }}
+
       - name: Setup elixir
         id: beam
         uses: erlef/setup-beam@v1
