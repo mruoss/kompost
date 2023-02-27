@@ -41,6 +41,9 @@ WORKDIR /app
 COPY --from=builder /app/_build/prod/rel/kompost ./
 RUN chown -R nobody: /app
 
+LABEL org.opencontainers.image.source="https://github.com/mruoss/kompost"
+LABEL org.opencontainers.image.authors="michael@michaelruoss.ch"
+
 ENTRYPOINT ["/app/bin/kompost"]
 CMD ["start"]
 

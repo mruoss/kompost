@@ -7,7 +7,6 @@ on:
 
 permissions:
   contents: write
-  checks: read
 
 env:
   MIX_ENV: prod
@@ -41,31 +40,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-      # - name: push README to Dockerhub
-      #   uses: christian-korneck/update-container-description-action@v1
-      #   env:
-      #     DOCKER_USER: ${{ secrets.DOCKERHUB_USERNAME }}
-      #     DOCKER_PASS: ${{ secrets.DOCKERHUB_TOKEN }}
-      #   with:
-      #     destination_container_repo: mruoss/kompost
-      #     provider: dockerhub
-      #     short_description: "Kubernetes operator providing self-service management for developers"
-      #     readme_file: "README.md"
-
   build_release:
     runs-on: ubuntu-latest
     needs: [create_gh_release]
     strategy:
       matrix:
         arch: ["", -slim, -alpine]
+    permissions:
+      packages: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
+      - name: Login to Github Container Registry
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -79,7 +71,7 @@ jobs:
           TAG=${{ github.ref_name }}
           ARCH=${{ matrix.arch }}
 
-          echo "docker_image=mruoss/kompost:${TAG#v}${ARCH%%-*}" >> $GITHUB_OUTPUT
+          echo "docker_image=ghcr.io/mruoss/kompost:${TAG#v}${ARCH%%-*}" >> $GITHUB_OUTPUT
 
       - name: Build and push
         uses: docker/build-push-action@v4
