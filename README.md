@@ -1,7 +1,9 @@
 # Kompost
 
+https://github.com/mruoss/kompost
+
 Kompost is a Kubernetes operator providing self-service management for
-developers ton install infrastructure resources.
+developers to install infrastructure resources.
 
 It is meant to be installed by operators running their applications on
 Kubernetes to give their development teams a way to create certain
