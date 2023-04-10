@@ -46,7 +46,7 @@ defmodule Kompost.MixProject do
       # {:bonny, path: "/Users/mruoss/src/community/bonny"},
       # {:bonny, github: "coryodaniel/bonny", branch: "master"},
       {:jason, "~> 1.0"},
-      {:postgrex, "~> 0.16.0"},
+      {:postgrex, "~> 0.17.0"},
       {:slugger, "~> 0.3.0"},
 
       # Dev dependencies
