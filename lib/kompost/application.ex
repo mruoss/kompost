@@ -4,7 +4,15 @@ defmodule Kompost.Application do
   use Application
   @impl true
   def start(_type, env: env) do
-    children = kompos(env)
+    children = [
+      {Bandit,
+       plug: Kompost.Webhooks.Router,
+       port: 4000,
+       certfile: "/mnt/cert/cert.pem",
+       keyfile: "/mnt/cert/key.pem",
+       scheme: :https}
+      | kompos(env)
+    ]
 
     opts = [strategy: :one_for_one, name: Kompost.Supervisor]
     Supervisor.start_link(children, opts)
