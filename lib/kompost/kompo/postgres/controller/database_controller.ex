@@ -25,7 +25,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
   @impl true
   def rbac_rules() do
-    [to_rbac_rule({"", "Secret", ["*"]})]
+    [to_rbac_rule({"", "secrets", ["*"]})]
   end
 
   @spec handle_event(Bonny.Axn.t(), Keyword.t()) :: Bonny.Axn.t()
