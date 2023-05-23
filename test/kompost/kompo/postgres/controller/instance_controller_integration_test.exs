@@ -3,9 +3,10 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   import YamlElixir.Sigil
 
+  alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
-  @resource_label %{"test" => "postgres-instance-controller-integration"}
+  @namespace "postgres-instance-controller-integration"
 
   @spec password_secret(name :: binary()) :: map()
   defp password_secret(name) do
@@ -14,11 +15,10 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     kind: Secret
     metadata:
       name: #{name}
-      namespace: default
+      namespace: #{@namespace}
     stringData:
       password: password
     """
-    |> put_in(~w(metadata labels), @resource_label)
   end
 
   setup_all do
@@ -28,23 +28,26 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       |> String.to_integer()
 
     conn = Kompost.Test.IntegrationHelper.conn!()
+    GlobalResourceHelper.create_namespace(@namespace, conn)
 
     on_exit(fn ->
-      selector = K8s.Selector.label(@resource_label)
+      {:ok, _} =
+        K8s.Client.delete_all("kompost.chuge.li/v1alpha1", "PostgresDatabase",
+          namespace: @namespace
+        )
+        |> K8s.Client.put_conn(conn)
+        |> K8s.Client.run()
+
+      Process.sleep(500)
 
       {:ok, _} =
         K8s.Client.delete_all("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          namespace: "default"
+          namespace: @namespace
         )
-        |> K8s.Operation.put_selector(selector)
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
 
-      {:ok, _} =
-        K8s.Client.delete_all("v1", "Secret", namespace: "default")
-        |> K8s.Operation.put_selector(selector)
-        |> K8s.Client.put_conn(conn)
-        |> K8s.Client.run()
+      Process.sleep(500)
     end)
 
     [conn: conn, timeout: timeout]
@@ -61,63 +64,32 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_secret_ref(@namespace)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Credentials"]["status"]
     end
 
     @tag :integration
+    @tag :wip
     test "Credentials condition status is True if password secret exists", %{
       conn: conn,
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, _} =
-               password_secret(resource_name)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
 
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_secret_ref(@namespace)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Credentials"]["status"]
@@ -129,26 +101,12 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_plain_pw(labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_plain_pw(@namespace)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Credentials"]["status"]
@@ -162,32 +120,14 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, _} =
-               password_secret(resource_name)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
 
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_secret_ref(@namespace)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Connected"]["status"]
@@ -199,26 +139,12 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_plain_pw("wrong_password", labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_plain_pw(@namespace, "wrong_password")
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Connected"]["status"]
@@ -232,32 +158,14 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      assert {:ok, _} =
-               password_secret(resource_name)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
 
-      assert {:ok, created_resource} =
-               resource_name
-               |> ResourceHelper.instance_with_secret_ref(labels: @resource_label)
-               |> K8s.Client.apply()
-               |> K8s.Client.put_conn(conn)
-               |> K8s.Client.run()
+      created_resource =
+        resource_name
+        |> ResourceHelper.instance_with_secret_ref(@namespace)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      get_op =
-        K8s.Client.get("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          name: resource_name,
-          namespace: "default"
-        )
-        |> K8s.Client.put_conn(conn)
-
-      {:ok, created_resource} =
-        K8s.Client.wait_until(get_op,
-          find: ["status", "observedGeneration"],
-          eval: created_resource["metadata"]["generation"],
-          timeout: timeout
-        )
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Privileged"]["status"]

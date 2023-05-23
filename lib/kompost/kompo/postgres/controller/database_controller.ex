@@ -133,9 +133,11 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       {:ok, axn}
     else
       {:instance, []} ->
-        Logger.warn("Failed to finalize. The referenced PostgreSQL instance was not found.")
-        failure_event(axn, message: "The referenced PostgreSQL instance was not found.")
-        {:error, axn}
+        Logger.warn(
+          "The referenced PostgreSQL instance was not found. But we consider the Database removed."
+        )
+
+        {:ok, axn}
 
       {:users, axn, {:error, message}} ->
         Logger.warn("Failed to finalize. #{message}")

@@ -49,6 +49,10 @@ defmodule Kompost.MixProject do
       {:postgrex, "~> 0.17.0"},
       {:slugger, "~> 0.3.0"},
 
+      # Temporal.io
+      {:temporalio, github: "mruoss/temporalio.ex", tag: "v1.20.0"},
+      {:google_protos, "~> 0.3.0"},
+
       # Dev dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},

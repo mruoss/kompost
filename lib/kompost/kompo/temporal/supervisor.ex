@@ -1,13 +1,12 @@
-defmodule Kompost.Kompo.Postgres.Supervisor do
+defmodule Kompost.Kompo.Temporal.Supervisor do
   @moduledoc """
-  Supervisor for the Postgres Kompo.
+  Supervisor for the Temporal Kompo.
   """
 
   use Supervisor
 
-  alias Kompost.Kompo.Postgres.{
+  alias Kompost.Kompo.Temporal.{
     ConnectionRegistry,
-    ConnectionSupervisor,
     Operator
   }
 
@@ -19,8 +18,10 @@ defmodule Kompost.Kompo.Postgres.Supervisor do
   @impl true
   def init(operator_args: operator_args) do
     children = [
-      {Registry, keys: :unique, name: ConnectionRegistry},
-      {DynamicSupervisor, name: ConnectionSupervisor},
+      %{
+        id: ConnectionRegistry,
+        start: {Agent, :start_link, [fn -> %{} end, [name: ConnectionRegistry]]}
+      },
       {Operator, Keyword.put(operator_args, :name, Operator)}
     ]
 

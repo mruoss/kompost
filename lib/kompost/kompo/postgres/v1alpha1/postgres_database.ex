@@ -20,6 +20,7 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
         :properties:
           :spec:
             type: object
+            required: ["instanceRef"]
             properties:
               instanceRef:
                 type: object
