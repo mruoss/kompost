@@ -178,5 +178,5 @@ defmodule Kompost.Kompo.Postgres.Privileges do
 
   @spec process_trx_result({:ok, :ok} | term()) :: :ok | term()
   defp process_trx_result({:ok, :ok}), do: :ok
-  defp process_trx_result(error), do: error
+  defp process_trx_result({:error, error}), do: error
 end
