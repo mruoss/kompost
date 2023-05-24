@@ -58,7 +58,7 @@ jobs:
           push: true
           tags: ${{ steps.prepare_vars.outputs.docker_image }}
           platforms: linux/amd64,linux/arm64/v8,linux/arm
-          cache-from: type=registry,ref=user/app:latest
+          cache-from: type=registry,ref=ghcr.io/mruoss/kompost:dev
           cache-to: type=inline
           build-args: |
             ERLANG_IMAGE=${{ env.ERLANG_IMAGE }}${{ matrix.arch }}
