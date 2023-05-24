@@ -11,8 +11,8 @@ permissions:
 env:
   MIX_ENV: prod
   KUBECONFIG: /home/runner/.kube/config
-  ELIXIR_IMAGE: elixir:1.14.3-otp-24
-  ERLANG_IMAGE: erlang:24.3.4.7
+  ELIXIR_IMAGE: elixir:1.14.5-otp-25
+  ERLANG_IMAGE: erlang:25
 
 jobs:
   build_container_image:
@@ -42,7 +42,7 @@ jobs:
       - name: Prepare variables
         id: prepare_vars
         run: |
-          if [[ "${{ github.ref_name }}" == "tag" ]]; then
+          if [ "${{ github.ref_type }}" = "tag" ]; then
             TAG=${{ github.ref_name }}
           else
             TAG=dev
