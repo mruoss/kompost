@@ -24,7 +24,8 @@ jobs:
         with:
           compose-file: test/integration/docker-compose.yml
           services: |
-            db
+            postgresql
+            temporal
       - uses: engineerd/setup-kind@v0.5.0
         id: kind
         with:

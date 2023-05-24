@@ -1,18 +1,60 @@
 version: "3.1"
 
 services:
-  db:
+  postgresql:
     image: postgres:15.2-alpine
     restart: always
     environment:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_DB: ${POSTGRES_DB}
+    networks:
+      - kompost-network
     ports:
-      - ${EXPOSED_PORT}:5432
+      - ${POSTGRES_EXPOSED_PORT}:5432
 
   adminer:
     image: adminer
     restart: always
+    networks:
+      - kompost-network
     ports:
       - 8080:8080
+
+  temporal:
+    container_name: temporal
+    depends_on:
+      - postgresql
+    environment:
+      - DB=postgresql
+      - DB_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PWD=${POSTGRES_PASSWORD}
+      - POSTGRES_SEEDS=postgresql
+      - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-sql.yaml
+    image: temporalio/auto-setup:${TEMPORAL_VERSION}
+    networks:
+      - kompost-network
+    ports:
+      - ${TEMPORAL_EXPOSED_PORT}:7233
+    volumes:
+      - ./temporal/dynamicconfig:/etc/temporal/config/dynamicconfig
+    labels:
+      kompose.volume.type: configMap
+
+  temporal-ui:
+    container_name: temporal-ui
+    depends_on:
+      - temporal
+    environment:
+      - TEMPORAL_ADDRESS=temporal:7233
+      - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+    image: temporalio/ui:${TEMPORAL_UI_VERSION}
+    networks:
+      - kompost-network
+    ports:
+      - 8095:8080
+networks:
+  kompost-network:
+    driver: bridge
+    name: kompost-network

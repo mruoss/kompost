@@ -1,9 +1,10 @@
 defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
   use ExUnit.Case, async: true
 
+  alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
-  @resource_label %{"test" => "postgres-database-controller-integration"}
+  @namespace "postgres-database-controller-integration"
 
   setup_all do
     timeout =
@@ -12,32 +13,33 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
       |> String.to_integer()
 
     conn = Kompost.Test.IntegrationHelper.conn!()
-
-    instance =
-      "database-integration-test-#{:rand.uniform(10000)}"
-      |> ResourceHelper.instance_with_plain_pw(labels: @resource_label)
-      |> ResourceHelper.apply(conn)
-      |> ResourceHelper.wait_until_observed(conn, timeout)
+    GlobalResourceHelper.create_namespace(@namespace, conn)
 
     on_exit(fn ->
-      selector = K8s.Selector.label(@resource_label)
-
       {:ok, _} =
         K8s.Client.delete_all("kompost.chuge.li/v1alpha1", "PostgresDatabase",
-          namespace: "default"
+          namespace: @namespace
         )
-        |> K8s.Operation.put_selector(selector)
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
+
+      Process.sleep(500)
 
       {:ok, _} =
         K8s.Client.delete_all("kompost.chuge.li/v1alpha1", "PostgresInstance",
-          namespace: "default"
+          namespace: @namespace
         )
-        |> K8s.Operation.put_selector(selector)
         |> K8s.Client.put_conn(conn)
         |> K8s.Client.run()
+
+      Process.sleep(500)
     end)
+
+    instance =
+      "database-integration-test-#{:rand.uniform(10000)}"
+      |> ResourceHelper.instance_with_plain_pw(@namespace)
+      |> GlobalResourceHelper.k8s_apply(conn)
+      |> GlobalResourceHelper.wait_until_observed(conn, timeout)
 
     [conn: conn, instance: instance, timeout: timeout]
   end
@@ -58,10 +60,10 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
     } do
       created_resource =
         resource_name
-        |> ResourceHelper.database(instance, labels: @resource_label)
-        |> ResourceHelper.apply(conn)
+        |> ResourceHelper.database(@namespace, instance)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      created_resource = ResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert %{"status" => "True"} = conditions["Connection"]
@@ -79,12 +81,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.database(
-          %{"metadata" => %{"namespace" => "default", "name" => "does-not-exist"}},
-          labels: @resource_label
+          @namespace,
+          %{"metadata" => %{"namespace" => @namespace, "name" => "does-not-exist"}}
         )
-        |> ResourceHelper.apply(conn)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      created_resource = ResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert %{"status" => "False"} = conditions["Connection"]
@@ -93,7 +95,6 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
 
   describe "descendants are created and data can be used to connect to DB" do
     @tag :integration
-    @tag :wip
     test "Secrets are created", %{
       conn: conn,
       resource_name: resource_name,
@@ -103,18 +104,18 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.database(
-          instance,
-          labels: @resource_label
+          @namespace,
+          instance
         )
-        |> ResourceHelper.apply(conn)
+        |> GlobalResourceHelper.k8s_apply(conn)
 
-      created_resource = ResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
 
       assert [_ | _] = created_resource["status"]["users"]
 
       for user_secret <- created_resource["status"]["users"] do
         {:ok, %{"data" => data}} =
-          K8s.Client.get("v1", "Secret", name: user_secret["secret"], namespace: "default")
+          K8s.Client.get("v1", "Secret", name: user_secret["secret"], namespace: @namespace)
           |> K8s.Client.put_conn(conn)
           |> K8s.Client.run()
 

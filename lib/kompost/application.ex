@@ -14,8 +14,12 @@ defmodule Kompost.Application do
   defp kompos(env) do
     env
     |> Kompost.Kompo.get_enabled_kompos()
-    |> Enum.map(fn :postgres ->
-      {Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(env)]}
+    |> Enum.map(fn
+      :postgres ->
+        {Kompost.Kompo.Postgres.Supervisor, operator_args: [conn: conn(env)]}
+
+      :temporal ->
+        {Kompost.Kompo.Temporal.Supervisor, operator_args: [conn: conn(env)]}
     end)
   end
 
