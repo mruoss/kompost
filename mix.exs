@@ -50,7 +50,7 @@ defmodule Kompost.MixProject do
       {:slugger, "~> 0.3.0"},
 
       # Temporal.io
-      {:temporalio, github: "mruoss/temporalio.ex", tag: "v1.20.0"},
+      {:temporalio, tag: "~> 1.20.0"},
       {:google_protos, "~> 0.3.0"},
 
       # Dev dependencies
