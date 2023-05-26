@@ -90,7 +90,8 @@ defmodule Kompost.Kompo.Postgres.Instance do
   def disconnect(id) do
     case lookup(id) do
       [{conn, _}] ->
-        Process.exit(conn, :normal)
+        # This will also unregister the process at the ConnectionRegistry:
+        DynamicSupervisor.terminate_child(ConnectionSupervisor, conn)
         :ok
 
       [] ->
