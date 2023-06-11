@@ -146,7 +146,7 @@ jobs:
         id: prepare_vars
         run: |
           ${{ matrix.arch }}
-          echo "dest = $DEST" >> $GITHUB_OUTPUT
+          echo "dest=$DEST" >> $GITHUB_OUTPUT
 
       - name: build manifest
         run: |
