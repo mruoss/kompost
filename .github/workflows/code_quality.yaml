@@ -9,7 +9,7 @@ env:
   MIX_ENV: test
   KUBECONFIG: /home/runner/.kube/config
   ELIXIR_VERSION: 1.14.x
-  OTP_VERSION: 25.x
+  OTP_VERSION: 26.x
 
 jobs:
   code-quality:
