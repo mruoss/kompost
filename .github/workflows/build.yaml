@@ -112,7 +112,7 @@ jobs:
 
   upload_manifests:
     runs-on: ubuntu-latest
-    needs: [read_matrix_output]
+    needs: [read_matrix_output, create_gh_release]
     strategy:
       matrix:
         arch: ["", -slim, -alpine]
