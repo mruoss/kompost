@@ -150,7 +150,7 @@ jobs:
 
       - name: build manifest
         run: |
-          mix bonny.gen.manifest --image "${{ fromJson(needs.read_matrix_output.outputs.result).docker_image[matrix.arch] }}" --namespace kompost -o manifest${{ steps.prepare_vars.outputs.dest }}.yaml
+          mix bonny.gen.manifest --image "${{ fromJson(needs.read_matrix_output.outputs.result).dest_image[matrix.arch] }}" --namespace kompost -o manifest${{ steps.prepare_vars.outputs.dest }}.yaml
 
       - name: upload manifest as artifact
         uses: actions/upload-release-asset@v1
