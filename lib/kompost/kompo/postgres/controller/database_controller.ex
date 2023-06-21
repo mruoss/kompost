@@ -78,28 +78,28 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     else
       {:instance, []} ->
         message = "The referenced PostgreSQL instance was not found."
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
         |> set_condition("Connection", false, message)
 
       {:database, axn, {:error, message}} ->
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
         |> set_condition("Database", false, message)
 
       {:app_user, {:error, axn, message}} ->
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
         |> set_condition("AppUser", false, message)
 
       {:inspector_user, {:error, axn, message}} ->
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
@@ -133,19 +133,19 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       {:ok, axn}
     else
       {:instance, []} ->
-        Logger.warn(
+        Logger.warning(
           "The referenced PostgreSQL instance was not found. But we consider the Database removed."
         )
 
         {:ok, axn}
 
       {:users, axn, {:error, message}} ->
-        Logger.warn("Failed to finalize. #{message}")
+        Logger.warning("Failed to finalize. #{message}")
         failure_event(axn, message: message)
         {:error, axn}
 
       {:database, axn, {:error, message}} ->
-        Logger.warn("Failed to finalize. #{message}")
+        Logger.warning("Failed to finalize. #{message}")
         failure_event(axn, message: message)
         {:error, axn}
     end

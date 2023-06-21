@@ -28,7 +28,7 @@ defmodule Kompost.Kompo.Temporal.Controller.APIServerController do
 
       {:error, reason} ->
         message = "Could not connect to Temporal cluster: #{reason}"
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
