@@ -8,8 +8,6 @@ on:
 env:
   MIX_ENV: test
   KUBECONFIG: /home/runner/.kube/config
-  ELIXIR_VERSION: 1.14.x
-  OTP_VERSION: 26.x
 
 jobs:
   code-quality:
@@ -36,8 +34,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: ${{ env.ELIXIR_VERSION }}
-          otp-version: ${{ env.OTP_VERSION }}
+          version-file: .tool-versions
+          version-type: strict
           install-rebar: true
           install-hex: true
 

@@ -45,7 +45,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceController do
     else
       {:channel, nil} ->
         message = "Could not connect to Temporal cluster: No active connection was found"
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
@@ -53,7 +53,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceController do
 
       {:namespace, axn, {:error, exception}} when is_exception(exception) ->
         message = Exception.message(exception)
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
@@ -84,13 +84,13 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceController do
         message =
           "The referenced Temporal API Server was not found. We consider the resource gone."
 
-        Logger.warn("Failed to finalize. #{message}")
+        Logger.warning("Failed to finalize. #{message}")
 
         {:ok, axn}
 
       {:namespace, axn, {:error, exception}} when is_exception(exception) ->
         message = Exception.message(exception)
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)

@@ -36,7 +36,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
       success_event(axn)
     else
       {:cred, {:error, error}} ->
-        Logger.warn("Error when trying to fetch password.", error: error)
+        Logger.warning("Error when trying to fetch password.", error: error)
 
         axn
         |> failure_event(message: Exception.message(error))
@@ -44,14 +44,14 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
       {:conn, axn, {:error, error}} ->
         message = Exception.message(error)
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)
         |> set_condition("Connected", false, message)
 
       {:privileges, {:error, message}} ->
-        Logger.warn("#{axn.action} failed. #{message}")
+        Logger.warning("#{axn.action} failed. #{message}")
 
         axn
         |> failure_event(message: message)

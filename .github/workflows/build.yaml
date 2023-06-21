@@ -11,7 +11,7 @@ permissions:
 env:
   MIX_ENV: prod
   KUBECONFIG: /home/runner/.kube/config
-  ELIXIR_IMAGE: hexpm/elixir:1.14.5-erlang-26.0.1
+  ELIXIR_IMAGE: hexpm/elixir:1.15.0-erlang-26.0.1
   ERLANG_IMAGE: hexpm/erlang:26.0.1
 
 jobs:
