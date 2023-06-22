@@ -11,6 +11,7 @@ defmodule Kompost.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: cli_env(),
       test_coverage: [tool: ExCoveralls],
+      dialyzer: [ignore_warnings: ".dialyzer_ignore.exs"],
       releases: releases()
     ]
   end

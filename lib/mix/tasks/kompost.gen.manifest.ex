@@ -8,6 +8,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
   use Mix.Task
 
   alias Bonny.Mix.Operator
+  alias Kompost.K8sConn
   alias Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer
 
   import YamlElixir.Sigil
@@ -34,13 +35,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
 
     Application.ensure_all_started(:k8s)
     ensure_cluster(cluster_name)
-
-    {:ok, conn} =
-      K8s.Conn.from_file("~/.kube/config",
-        context: "kind-#{cluster_name}",
-        insecure_skip_tls_verify: true
-      )
-
+    conn = K8sConn.get!(env)
     ensure_namespace(conn, Keyword.fetch!(opts, :namespace))
 
     operations =
