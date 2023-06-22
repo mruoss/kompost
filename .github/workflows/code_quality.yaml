@@ -29,6 +29,7 @@ jobs:
         with:
           version: v0.17.0
           image: kindest/node:${{ matrix.k8s_version }}
+          name: kompost-test
 
       - name: Setup elixir
         id: beam
@@ -69,7 +70,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MIX_ENV=test mix bonny.gen.manifest -o - | kubectl apply -f -
+          MIX_ENV=test mix kompost.gen.manifest
           TEST_WAIT_TIMEOUT=10000 TEST_KUBECONFIG=$KUBECONFIG mix coveralls.github --include integration --timeout 12000
 
       - name: Retrieve PLT Cache

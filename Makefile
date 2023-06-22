@@ -1,4 +1,4 @@
-CLUSTER_NAME=kompost
+CLUSTER_NAME=kompost-test
 KUBECONFIG_PATH?=./test/integration/cluster.yaml
 
 
@@ -15,7 +15,7 @@ test: docker_compose
 test: test/integration/cluster.yaml
 test: ## Run integration tests using k3d `make cluster`
 	MIX_ENV=test mix compile
-	MIX_ENV=test mix bonny.gen.manifest -o - | kubectl apply -f -
+	MIX_ENV=test mix kompost.gen.manifest
 	kubectl config use-context kind-${CLUSTER_NAME}
 	TEST_KUBECONFIG=${KUBECONFIG_PATH} mix test --include integration --cover
 

@@ -9,12 +9,9 @@ defmodule Kompost.K8sConn do
   ```
   """
 
-  @spec get!(atom()) :: K8s.Conn.t()
+  @spec get!(env :: atom()) :: K8s.Conn.t()
   def get!(:dev) do
-    {:ok, conn} =
-      File.cwd!()
-      |> Path.join("test/integration/cluster.yaml")
-      |> K8s.Conn.from_file()
+    {:ok, conn} = K8s.Conn.from_file("~/.kube/config", "kind-kompost-dev")
 
     struct!(conn, insecure_skip_tls_verify: true)
   end
