@@ -1,19 +1,23 @@
 defmodule Kompost.Application do
   @moduledoc false
 
+  defp bandit(:prod) do
+    {Bandit,
+     plug: Kompost.Webhooks.Router,
+     port: 4000,
+     certfile: "/mnt/cert/cert.pem",
+     keyfile: "/mnt/cert/key.pem",
+     scheme: :https}
+  end
+
+  defp bandit(_) do
+    {Bandit, plug: Kompost.Webhooks.Router, port: 4000, scheme: :http}
+  end
+
   use Application
   @impl true
   def start(_type, env: env) do
-    children = [
-      {Bandit,
-       plug: Kompost.Webhooks.Router,
-       port: 4000,
-       certfile: "/mnt/cert/cert.pem",
-       keyfile: "/mnt/cert/key.pem",
-       scheme: :https}
-      | kompos(env)
-    ]
-
+    children = [bandit(env) | kompos(env)]
     opts = [strategy: :one_for_one, name: Kompost.Supervisor]
     Supervisor.start_link(children, opts)
   end
