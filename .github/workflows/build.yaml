@@ -4,6 +4,8 @@ on:
   push:
     tags: [v*]
     branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
@@ -61,7 +63,7 @@ jobs:
         uses: docker/build-push-action@v4
         id: build_and_push
         with:
-          push: true
+          push: ${{ github.ref_type == 'tag' }}
           tags: ${{ steps.prepare_vars.outputs.dest_image }}
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
