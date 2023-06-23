@@ -41,6 +41,8 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
       |> GlobalResourceHelper.k8s_apply(conn)
       |> GlobalResourceHelper.wait_until_observed(conn, timeout)
 
+    GlobalResourceHelper.wait_for_condition(api_server, conn, "Connected", timeout)
+
     [conn: conn, timeout: timeout, api_server: api_server]
   end
 
@@ -75,7 +77,6 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     end
 
     @tag :integration
-    @tag :wip
     test "Connected condition status is True if connection to temporal was established",
          %{
            conn: conn,
@@ -95,10 +96,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
         )
         |> GlobalResourceHelper.k8s_apply(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
-
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert "True" == conditions["Connected"]["status"]
+      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Connected", timeout)
     end
   end
 
@@ -132,7 +130,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     # end
 
     @tag :integration
-    test "Created condition status is True if Namespace could not be created",
+    test "Created condition status is True if Namespace was created",
          %{
            conn: conn,
            timeout: timeout,
@@ -151,11 +149,8 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
         )
         |> GlobalResourceHelper.k8s_apply(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
-
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert "True" == conditions["Connected"]["status"]
-      assert "True" == conditions["Created"]["status"]
+      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Connected", timeout)
+      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Created", timeout)
     end
   end
 end
