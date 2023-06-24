@@ -4,7 +4,7 @@ KUBECONFIG_PATH?=./test/integration/cluster.yaml
 
 .PHONY: docker_compose
 docker_compose:
-	docker-compose -f test/integration/docker-compose.yml up -d
+	docker-compose -f test/integration/docker-compose.yml up -d --remove-orphans
 
 test/integration/cluster.yaml:
 	$(MAKE) delete.cluster create.cluster
