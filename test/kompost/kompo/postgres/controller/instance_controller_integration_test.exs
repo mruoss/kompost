@@ -76,7 +76,6 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     end
 
     @tag :integration
-    @tag :wip
     test "Credentials condition status is True if password secret exists", %{
       conn: conn,
       timeout: timeout,

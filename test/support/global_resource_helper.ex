@@ -48,6 +48,34 @@ defmodule Kompost.Test.GlobalResourceHelper do
 
   @spec wait_until_observed(map, K8s.Conn.t(), non_neg_integer()) :: map
   def wait_until_observed(resource, conn, timeout) do
+    wait_until(
+      resource,
+      conn,
+      ["status", "observedGeneration"],
+      resource["metadata"]["generation"],
+      timeout
+    )
+  end
+
+  @spec wait_for_condition(map, K8s.Conn.t(), binary(), binary(), non_neg_integer()) :: map
+  def wait_for_condition(resource, conn, condition, status \\ "True", timeout) do
+    wait_until(
+      resource,
+      conn,
+      &find_condition_status(&1, condition),
+      status,
+      timeout
+    )
+  end
+
+  @spec wait_until(
+          resource :: map(),
+          K8s.Conn.t(),
+          find :: list | function(),
+          term,
+          non_neg_integer()
+        ) :: map
+  def wait_until(resource, conn, find, eval, timeout) do
     get_op =
       resource
       |> K8s.Client.get()
@@ -55,11 +83,23 @@ defmodule Kompost.Test.GlobalResourceHelper do
 
     {:ok, resource} =
       K8s.Client.wait_until(get_op,
-        find: ["status", "observedGeneration"],
-        eval: resource["metadata"]["generation"],
+        find: find,
+        eval: eval,
         timeout: timeout
       )
 
     resource
+  end
+
+  @spec find_condition_status(map(), binary()) :: binary()
+  def find_condition_status(resource, condition) do
+    get_in(resource, [
+      "status",
+      "conditions",
+      Access.filter(&(&1["type"] == condition)),
+      "status"
+    ])
+    |> List.wrap()
+    |> List.first()
   end
 end

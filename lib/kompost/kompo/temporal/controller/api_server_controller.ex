@@ -37,6 +37,10 @@ defmodule Kompost.Kompo.Temporal.Controller.APIServerController do
   end
 
   def handle_event(%Bonny.Axn{action: :delete} = axn, _opts) do
+    axn.resource
+    |> Conn.get_id()
+    |> Conn.disconnect()
+
     success_event(axn)
   end
 end

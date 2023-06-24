@@ -5,6 +5,8 @@ defmodule Kompost.Kompo.Temporal.Conn do
   `Kompost.Kompo.Temporal.ConnectionRegistry`
   """
 
+  require Logger
+
   alias Temporal.Api.Workflowservice.V1.{
     ListNamespacesRequest,
     WorkflowService
@@ -28,7 +30,7 @@ defmodule Kompost.Kompo.Temporal.Conn do
           {:ok, GRPC.Channel.t()} | {:error, any()}
   def connect(id, addr) do
     with {:lookup, nil} <- {:lookup, lookup(id)},
-         {:ok, channel} <- GRPC.Stub.connect(addr) do
+         {:ok, channel} <- GRPC.Stub.connect(addr, adapter: GRPC.Client.Adapters.Mint) do
       Agent.update(ConnectionRegistry, &Map.put(&1, id, channel))
       {:ok, channel}
     else
@@ -45,11 +47,20 @@ defmodule Kompost.Kompo.Temporal.Conn do
   @spec lookup(id_t()) :: GRPC.Channel.t() | nil
   def lookup(server) do
     with {:ok, channel} <- Agent.get(ConnectionRegistry, &Map.fetch(&1, server)),
-         {:ok, _} <-
-           WorkflowService.Stub.list_namespaces(channel, %ListNamespacesRequest{}) do
+         {:ok, _} <- WorkflowService.Stub.list_namespaces(channel, %ListNamespacesRequest{}) do
       channel
     else
-      _ -> nil
+      {:error, %GRPC.RPCError{} = error} ->
+        Logger.warning(
+          "Temporal connection #{inspect(server)} was found but connection failed: #{Exception.message(error)}"
+        )
+
+        Agent.update(ConnectionRegistry, &Map.delete(&1, server))
+        nil
+
+      :error ->
+        Logger.warning("Temporal connection #{inspect(server)} was not found.")
+        nil
     end
   end
 
@@ -70,5 +81,14 @@ defmodule Kompost.Kompo.Temporal.Conn do
   Removes the channel from the `ConnectionRegistry`.
   """
   @spec disconnect(id_t()) :: :ok
-  def disconnect(id), do: Agent.update(ConnectionRegistry, &Map.delete(&1, id))
+  def disconnect(server) do
+    case Agent.get_and_update(ConnectionRegistry, &Map.pop(&1, server)) do
+      nil ->
+        :ok
+
+      channel ->
+        GRPC.Stub.disconnect(channel)
+        :ok
+    end
+  end
 end

@@ -12,6 +12,11 @@ services:
       - kompost-network
     ports:
       - ${POSTGRES_EXPOSED_PORT}:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   adminer:
     image: adminer
@@ -24,7 +29,8 @@ services:
   temporal:
     container_name: temporal
     depends_on:
-      - postgresql
+      postgresql:
+        condition: service_healthy
     environment:
       - DB=postgresql
       - DB_PORT=5432

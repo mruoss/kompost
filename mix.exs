@@ -11,6 +11,7 @@ defmodule Kompost.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       preferred_cli_env: cli_env(),
       test_coverage: [tool: ExCoveralls],
+      dialyzer: [ignore_warnings: ".dialyzer_ignore.exs"],
       releases: releases()
     ]
   end
@@ -52,6 +53,9 @@ defmodule Kompost.MixProject do
       # Temporal.io
       {:temporalio, "~> 1.0"},
       {:google_protos, "~> 0.3.0"},
+      # todo: remove with grpc 0.7.0:
+      {:mint, "~> 1.5.1", override: true},
+      {:grpc, "~> 0.6.0", override: true},
 
       # Dev dependencies
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
