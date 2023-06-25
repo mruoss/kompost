@@ -100,10 +100,12 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     image = Keyword.fetch!(opts, :image)
     namespace = Keyword.fetch!(opts, :namespace)
 
-    deployment =
-      Operator.deployment(image, namespace)
-
-    [deployment | generate_manifest(:dev, opts)]
+    [
+      Operator.deployment(image, namespace),
+      svc_manifest(namespace),
+      webhook_config_manifest(namespace)
+      | generate_manifest(:dev, opts)
+    ]
   end
 
   defp generate_manifest(_, opts) do
@@ -116,5 +118,50 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
         Operator.service_account(namespace),
         Operator.cluster_role_binding(namespace)
       ]
+  end
+
+  @spec svc_manifest(namespace :: binary()) :: map()
+  def svc_manifest(namespace) do
+    ~y"""
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: kompost
+      namespace: #{namespace}
+      labels:
+        k8s-app: kompost
+    spec:
+      ports:
+      - name: webhooks
+        port: 4000
+        targetPort: webhooks
+        protocol: TCP
+      selector:
+        k8s-app: kompost
+    """
+  end
+
+  @spec webhook_config_manifest(namespace :: binary()) :: map()
+  defp webhook_config_manifest(namespace) do
+    ~y"""
+    apiVersion: admissionregistration.k8s.io/v1
+    kind: ValidatingWebhookConfiguration
+    metadata:
+      name: "kompost.chuge.li"
+    webhooks:
+      - name: "postgres.kompost.chuge.li"
+        matchPolicy: Equivalent
+        rules:
+          - operations: ['CREATE','UPDATE']
+            apiGroups: ['kompost.chuge.li']
+            apiVersions: ['v1alpha1']
+            resources: ['postgresdatabases']
+        failurePolicy: 'Ignore' # Fail-open (optional)
+        sideEffects: None
+        clientConfig:
+          service:
+            namespace: #{namespace}
+            name: kompost
+    """
   end
 end

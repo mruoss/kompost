@@ -19,6 +19,21 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
 
   @spec override(Bonny.Resource.t()) :: Bonny.Resource.t()
 
+  def override(%{kind: "Deployment"} = resource) do
+    put_in(
+      resource,
+      [
+        "spec",
+        "template",
+        "spec",
+        "containers",
+        Access.filter(&(&1["name"] == "kompost")),
+        "ports"
+      ],
+      [%{"containerPort" => 4000, "name" => "webhooks"}]
+    )
+  end
+
   def override(%{kind: "CustomResourceDefinition"} = resource) do
     resource
     |> Map.update!(:metadata, fn

@@ -1,8 +1,11 @@
 defmodule Kompost.Webhooks do
+  @moduledoc false
+
   alias Kompost.K8sConn
 
   require Logger
 
+  @spec bootstrap_tls(atom()) :: :ok
   def bootstrap_tls(env) do
     Application.ensure_all_started(:k8s)
     conn = K8sConn.get!(env)
