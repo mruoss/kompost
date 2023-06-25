@@ -59,6 +59,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   describe "credentials" do
     @tag :integration
+    @tag :postgres
     test "Credentials condition status is False if the password secret does not exist", %{
       conn: conn,
       timeout: timeout,
@@ -76,6 +77,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     end
 
     @tag :integration
+    @tag :postgres
     test "Credentials condition status is True if password secret exists", %{
       conn: conn,
       timeout: timeout,
@@ -95,6 +97,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     end
 
     @tag :integration
+    @tag :postgres
     test "Credentials condition status is True if the plain password in resource", %{
       conn: conn,
       timeout: timeout,
@@ -114,6 +117,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   describe "connection arguments" do
     @tag :integration
+    @tag :postgres
     test "Connected condition status is true if arguments are correct", %{
       conn: conn,
       timeout: timeout,
@@ -133,6 +137,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     end
 
     @tag :integration
+    @tag :postgres
     test "Connected condition status is false if arguments are incorrect", %{
       conn: conn,
       timeout: timeout,
@@ -152,6 +157,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
 
   describe "privileges" do
     @tag :integration
+    @tag :postgres
     test "Privileged condition status is true if user is superuser", %{
       conn: conn,
       timeout: timeout,

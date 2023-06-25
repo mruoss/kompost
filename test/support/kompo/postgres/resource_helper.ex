@@ -49,9 +49,15 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
     |> put_in(~w(spec plainPassword), password)
   end
 
-  @spec database(name :: binary(), namespace :: binary(), instance :: map(), opts :: Keyword.t()) ::
+  @spec database(
+          name :: binary(),
+          namespace :: binary(),
+          instance :: map(),
+          params :: map(),
+          opts :: Keyword.t()
+        ) ::
           map()
-  def database(name, namespace, instance, opts \\ []) do
+  def database(name, namespace, instance, params \\ %{}, opts \\ []) do
     ~y"""
     apiVersion: kompost.chuge.li/v1alpha1
     kind: PostgresDatabase
@@ -63,6 +69,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
         name: #{instance["metadata"]["name"]}
         namespace: #{instance["metadata"]["namespace"]}
     """
+    |> put_in(~w(spec params), params)
     |> apply_opts(opts)
   end
 end

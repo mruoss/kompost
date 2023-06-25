@@ -3,6 +3,8 @@ defmodule Kompost.Kompo.Postgres.Database do
   Connector to operate on Postgres databases via Postgrex.
   """
 
+  alias Kompost.Kompo.Postgres.Database.Params
+
   @doc """
   Creates a Postgres safe db name from a resource.
 
@@ -20,14 +22,16 @@ defmodule Kompost.Kompo.Postgres.Database do
     )
   end
 
-  @spec apply(db_name :: binary(), Postgrex.conn()) :: :ok | {:error, message :: binary()}
-  def apply(db_name, conn) do
-    if exists?(db_name, conn), do: :ok, else: create(db_name, conn)
+  @spec apply(db_name :: binary(), db_params :: Params.t(), Postgrex.conn()) ::
+          :ok | {:error, message :: binary()}
+  def apply(db_name, db_params, conn) do
+    if exists?(db_name, conn), do: :ok, else: create(db_name, db_params, conn)
   end
 
-  @spec create(db_name :: binary(), Postgrex.conn()) :: :ok | {:error, message :: binary()}
-  defp create(db_name, conn) do
-    case Postgrex.query(conn, ~s(CREATE DATABASE "#{db_name}"), []) do
+  @spec create(db_name :: binary(), db_params :: Params.t(), Postgrex.conn()) ::
+          :ok | {:error, message :: binary()}
+  defp create(db_name, db_params, conn) do
+    case Postgrex.query(conn, ~s(CREATE DATABASE "#{db_name}" #{Params.render(db_params)}), []) do
       {:ok, %Postgrex.Result{}} ->
         :ok
 

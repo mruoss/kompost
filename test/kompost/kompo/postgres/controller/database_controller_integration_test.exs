@@ -52,6 +52,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
 
   describe "credentials" do
     @tag :integration
+    @tag :postgres
     test "Conditions are True if all is well", %{
       conn: conn,
       resource_name: resource_name,
@@ -73,6 +74,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
     end
 
     @tag :integration
+    @tag :postgres
     test "Connection condition is False if connection is not found", %{
       conn: conn,
       resource_name: resource_name,
@@ -93,9 +95,10 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
     end
   end
 
-  describe "descendants are created and data can be used to connect to DB" do
+  describe "descendants and database" do
     @tag :integration
-    test "Secrets are created", %{
+    @tag :postgres
+    test "Secrets are created and can be used to connect to DB", %{
       conn: conn,
       resource_name: resource_name,
       instance: instance,
@@ -138,6 +141,65 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
         conn = start_link_supervised!({Postgrex, conn_args}, id: username)
         assert {:ok, _} = Postgrex.query(conn, "SELECT * FROM pg_catalog.pg_tables", [])
       end
+    end
+
+    @tag :integration
+    @tag :postgres
+    @tag :wip
+    test "Parameters are applied upon DB creation", %{
+      conn: conn,
+      resource_name: resource_name,
+      instance: instance,
+      timeout: timeout
+    } do
+      created_resource =
+        resource_name
+        |> ResourceHelper.database(
+          @namespace,
+          instance,
+          %{
+            template: "template0",
+            encoding: "SQL_ASCII",
+            locale: "C",
+            lc_collate: "C",
+            lc_ctype: "C",
+            connection_limit: 50,
+            is_template: true
+          }
+        )
+        |> GlobalResourceHelper.k8s_apply(conn)
+
+      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
+      assert %{"status" => "True"} = conditions["Connection"]
+      assert %{"status" => "True"} = conditions["Database"]
+
+      conn_args = [
+        hostname: "127.0.0.1",
+        port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
+        username: System.fetch_env!("POSTGRES_USER"),
+        password: System.fetch_env!("POSTGRES_PASSWORD"),
+        database: "postgres"
+      ]
+
+      conn = start_link_supervised!({Postgrex, conn_args}, id: "root")
+
+      assert {:ok, _, %{rows: [[0, "C", "C", 50, true]]}} =
+               Postgrex.prepare_execute(
+                 conn,
+                 "",
+                 """
+                 SELECT
+                    encoding,
+                    datcollate,
+                    datctype,
+                    datconnlimit,
+                    datistemplate
+                 FROM pg_database
+                 WHERE datname=$1
+                 """,
+                 [created_resource["status"]["sql_db_name"]]
+               )
     end
   end
 end
