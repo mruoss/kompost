@@ -20,5 +20,6 @@ erl_crash.dump
 *.ez
 
 .github/
+_build/
 test/
-
+priv/

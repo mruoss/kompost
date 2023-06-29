@@ -17,6 +17,16 @@ if Mix.env() in [:dev, :test] do
       gen_kompo(:postgres, conn)
       gen_kompo(:temporal, conn)
 
+      Mix.Shell.IO.info("Waiting for temporal deployment to become ready")
+
+      K8s.Client.get("apps/v1", "Deployment", name: "temporal", namespace: "temporal")
+      |> Resource.wait_for_condition!(conn, "Available", 120_000)
+
+      Mix.Shell.IO.info("Waiting for postgres deployment to become ready")
+
+      K8s.Client.get("apps/v1", "Deployment", name: "postgres", namespace: "postgres")
+      |> Resource.wait_for_condition!(conn, "Available", 120_000)
+
       Mix.Shell.IO.info("We're good to go, captain!")
     end
 
@@ -34,11 +44,6 @@ if Mix.env() in [:dev, :test] do
         {:error, error} when is_exception(error) ->
           Mix.Shell.IO.error("Error applying postgres manifest: #{Exception.message(error)}")
       end)
-
-      Mix.Shell.IO.info("Waiting for postgres deployment to become ready")
-
-      K8s.Client.get("apps/v1", "Deployment", name: "postgres", namespace: "postgres")
-      |> Resource.wait_for_condition!(conn, "Available", 120_000)
 
       :ok
     end
@@ -64,11 +69,6 @@ if Mix.env() in [:dev, :test] do
         {:error, error} when is_exception(error) ->
           Mix.Shell.IO.error("Error applying temporal manifest: #{Exception.message(error)}")
       end)
-
-      Mix.Shell.IO.info("Waiting for postgres deployment to become ready")
-
-      K8s.Client.get("apps/v1", "Deployment", name: "temporal", namespace: "temporal")
-      |> Resource.wait_for_condition!(conn, "Available", 120_000)
 
       :ok
     end

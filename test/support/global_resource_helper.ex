@@ -27,6 +27,7 @@ defmodule Kompost.Test.GlobalResourceHelper do
   end
 
   defdelegate k8s_apply!(resource, conn), to: Kompost.Tools.Resource
+  defdelegate k8s_apply(resource, conn), to: Kompost.Tools.Resource
   defdelegate delete!(resource, conn), to: Kompost.Tools.Resource
   defdelegate wait_until_observed!(resource, conn, timeout), to: Kompost.Tools.Resource
   defdelegate wait_until!(resource, conn, find, eval, timeout), to: Kompost.Tools.Resource

@@ -82,7 +82,7 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
     )
   end
 
-  def override(%{kind: "Role"} = resource) do
+  def override(%{kind: "ClusterRole"} = resource) do
     Map.update!(resource, :rules, fn rules ->
       [
         ~y"""

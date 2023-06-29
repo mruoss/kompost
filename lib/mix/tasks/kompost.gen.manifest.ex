@@ -75,18 +75,19 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     if cluster_name not in String.split(clusters, "\n", trim: true) do
       Mix.Shell.IO.info("Creating kind cluster #{cluster_name}")
 
-      Mix.Shell.IO.cmd(
-        "kind create cluster --name #{cluster_name} --config ./test/integration/kind-cluster.yml"
-      )
+      0 =
+        Mix.Shell.IO.cmd(
+          "kind create cluster --name #{cluster_name} --config ./test/integration/kind-cluster.yml"
+        )
     end
 
     if not File.exists?(kubeconfig_path) do
       Mix.Shell.IO.info("Generating kubeconfig file: #{kubeconfig_path}")
 
-      Mix.Shell.IO.cmd(
-        ~s(kind export kubeconfig --kubeconfig "#{kubeconfig_path}" --name "#{cluster_name}")
-      )
-      |> dbg()
+      0 =
+        Mix.Shell.IO.cmd(
+          ~s(kind export kubeconfig --kubeconfig "#{kubeconfig_path}" --name "#{cluster_name}")
+        )
     end
 
     :ok
@@ -145,7 +146,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     spec:
       ports:
       - name: webhooks
-        port: 4000
+        port: 443
         targetPort: webhooks
         protocol: TCP
       selector:
@@ -159,13 +160,13 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     apiVersion: admissionregistration.k8s.io/v1
     kind: ValidatingWebhookConfiguration
     metadata:
-      name: "kompost.chuge.li"
+      name: "kompost"
     webhooks:
       - name: "postgres.kompost.chuge.li"
         admissionReviewVersions: ["v1"]
         matchPolicy: Equivalent
         rules:
-          - operations: ['CREATE','UPDATE']
+          - operations: ['UPDATE']
             apiGroups: ['kompost.chuge.li']
             apiVersions: ['v1alpha1']
             resources: ['postgresdatabases']
@@ -175,6 +176,8 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
           service:
             namespace: #{namespace}
             name: kompost
+            path: /postgres/admission-review/validating
+            port: 443
     """
   end
 end

@@ -4,13 +4,17 @@ defmodule Kompost.Tools.Resource do
   """
   @spec k8s_apply!(map, K8s.Conn.t()) :: map()
   def k8s_apply!(resource, conn) do
-    {:ok, applied_resource} =
-      resource
-      |> K8s.Client.apply()
-      |> K8s.Client.put_conn(conn)
-      |> K8s.Client.run()
+    {:ok, applied_resource} = k8s_apply(resource, conn)
 
     applied_resource
+  end
+
+  @spec k8s_apply(map, K8s.Conn.t()) :: {:ok, map()} | {:error, any}
+  def k8s_apply(resource, conn) do
+    resource
+    |> K8s.Client.apply()
+    |> K8s.Client.put_conn(conn)
+    |> K8s.Client.run()
   end
 
   @spec delete!(map, K8s.Conn.t()) :: {:ok, map()}

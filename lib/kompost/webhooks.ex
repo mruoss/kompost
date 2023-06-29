@@ -17,6 +17,10 @@ defmodule Kompost.Webhooks do
            {:webhook_config,
             K8sWebhoox.update_admission_webhook_configs(conn, "kompost", ca_bundle)} do
       Logger.info("TLS Bootstrap completed.")
+    else
+      error ->
+        Logger.error("TLS Bootstrap failed: #{inspect(error)}")
+        exit({:shutdown, 1})
     end
   end
 end
