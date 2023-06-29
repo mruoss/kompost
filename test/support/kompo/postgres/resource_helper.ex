@@ -13,7 +13,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
       name: #{name}
       namespace: #{namespace}
     spec:
-      hostname: 127.0.0.1
+      hostname: #{System.get_env("POSTGRES_HOST", "127.0.0.1")}
       port: #{System.fetch_env!("POSTGRES_EXPOSED_PORT")}
       username: #{System.fetch_env!("POSTGRES_USER")}
     """

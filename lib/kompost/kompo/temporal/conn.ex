@@ -18,7 +18,7 @@ defmodule Kompost.Kompo.Temporal.Conn do
   Defines the ID for an instance. The ID is used as key when registering the
   Channel info at the `Kompost.Kompo.Temporal.ConnectionRegistry`
   """
-  @type id_t :: {namespace :: binary(), name :: binary()}
+  @type server_t :: {namespace :: binary(), name :: binary()}
 
   @doc """
   Checks in the `Kompost.Kompo.Temporal.ConnectionRegistry` for an existing
@@ -26,16 +26,46 @@ defmodule Kompost.Kompo.Temporal.Conn do
   connection is established. The returned channel info is then registered at the
   `Kompost.Kompo.Temporal.ConnectionRegistry`.
   """
-  @spec connect(id :: id_t(), addr :: String.t()) ::
+  @spec connect(server :: server_t(), addr :: String.t()) ::
           {:ok, GRPC.Channel.t()} | {:error, any()}
-  def connect(id, addr) do
-    with {:lookup, nil} <- {:lookup, lookup(id)},
-         {:ok, channel} <- GRPC.Stub.connect(addr, adapter: GRPC.Client.Adapters.Mint) do
-      Agent.update(ConnectionRegistry, &Map.put(&1, id, channel))
+  def connect(server, addr) do
+    with {:lookup, nil} <- {:lookup, lookup(server)},
+         {:ok, channel} <- GRPC.Stub.connect(addr, adapter: GRPC.Client.Adapters.Mint),
+         :ok <- verify_connection(server, channel) do
+      Agent.update(ConnectionRegistry, &Map.put(&1, server, channel))
       {:ok, channel}
     else
       {:lookup, channel} -> {:ok, channel}
+      :error -> {:error, "Connection failed."}
       connection_error -> connection_error
+    end
+  end
+
+  @spec verify_connection(server :: server_t(), channel :: GRPC.Channel.t()) :: :ok | :error
+  defp verify_connection(server, channel) do
+    case WorkflowService.Stub.list_namespaces(channel, %ListNamespacesRequest{}) do
+      {:ok, _} ->
+        :ok
+
+      {:error, %GRPC.RPCError{} = error} ->
+        Logger.warning(
+          "Temporal connection #{inspect(server)} was found but connection failed: #{Exception.message(error)}"
+        )
+
+        Agent.update(ConnectionRegistry, &Map.delete(&1, server))
+        :error
+
+      {:error, error} ->
+        Logger.warning(
+          "Temporal connection #{inspect(server)} was found but connection failed: #{inspect(error)}"
+        )
+
+        Agent.update(ConnectionRegistry, &Map.delete(&1, server))
+        :error
+
+      :error ->
+        Logger.warning("Temporal connection #{inspect(server)} was not found.")
+        :error
     end
   end
 
@@ -44,22 +74,18 @@ defmodule Kompost.Kompo.Temporal.Conn do
   connection defined by the given `id`. If one is found, checks if the
   connection is alive by requesting a list of namespaces.
   """
-  @spec lookup(id_t()) :: GRPC.Channel.t() | nil
+  @spec lookup(server_t()) :: GRPC.Channel.t() | nil
   def lookup(server) do
-    with {:ok, channel} <- Agent.get(ConnectionRegistry, &Map.fetch(&1, server)),
-         {:ok, _} <- WorkflowService.Stub.list_namespaces(channel, %ListNamespacesRequest{}) do
+    with {:find, {:ok, channel}} <-
+           {:find, Agent.get(ConnectionRegistry, &Map.fetch(&1, server))},
+         {:verify, :ok} <- {:verify, verify_connection(server, channel)} do
       channel
     else
-      {:error, %GRPC.RPCError{} = error} ->
-        Logger.warning(
-          "Temporal connection #{inspect(server)} was found but connection failed: #{Exception.message(error)}"
-        )
-
-        Agent.update(ConnectionRegistry, &Map.delete(&1, server))
+      {:find, :error} ->
+        Logger.warning("Temporal connection #{inspect(server)} was not found.")
         nil
 
-      :error ->
-        Logger.warning("Temporal connection #{inspect(server)} was not found.")
+      _ ->
         nil
     end
   end
@@ -73,14 +99,14 @@ defmodule Kompost.Kompo.Temporal.Conn do
       ...> Kompost.Kompo.Postgres.Instance.get_id(resource)
       {"default", "foo-bar"}
   """
-  @spec get_id(resource :: map()) :: id_t()
+  @spec get_id(resource :: map()) :: server_t()
   def get_id(%{"metadata" => metadata}), do: {metadata["namespace"], metadata["name"]}
   def get_id(reference), do: {reference["namespace"], reference["name"]}
 
   @doc """
   Removes the channel from the `ConnectionRegistry`.
   """
-  @spec disconnect(id_t()) :: :ok
+  @spec disconnect(server_t()) :: :ok
   def disconnect(server) do
     case Agent.get_and_update(ConnectionRegistry, &Map.pop(&1, server)) do
       nil ->

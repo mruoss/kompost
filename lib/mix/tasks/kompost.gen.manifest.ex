@@ -34,7 +34,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     cluster_name = "kompost-#{env}"
 
     Application.ensure_all_started(:k8s)
-    ensure_cluster(cluster_name)
+    ensure_cluster(cluster_name, "./test/integration/kubeconfig-#{env}.yaml")
     conn = K8sConn.get!(env)
     ensure_namespace(conn, Keyword.fetch!(opts, :namespace))
 
@@ -68,13 +68,25 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     |> Mix.Bonny.render(out)
   end
 
-  @spec ensure_cluster(binary()) :: :ok
-  defp ensure_cluster(cluster_name) do
+  @spec ensure_cluster(cluster_name :: binary(), kubeconfig_path :: binary()) :: :ok
+  defp ensure_cluster(cluster_name, kubeconfig_path) do
     {clusters, 0} = System.cmd("kind", ~w(get clusters))
 
     if cluster_name not in String.split(clusters, "\n", trim: true) do
       Mix.Shell.IO.info("Creating kind cluster #{cluster_name}")
-      Mix.Shell.IO.cmd("kind create cluster --name #{cluster_name}")
+
+      Mix.Shell.IO.cmd(
+        "kind create cluster --name #{cluster_name} --config ./test/integration/kind-cluster.yml"
+      )
+    end
+
+    if not File.exists?(kubeconfig_path) do
+      Mix.Shell.IO.info("Generating kubeconfig file: #{kubeconfig_path}")
+
+      Mix.Shell.IO.cmd(
+        ~s(kind export kubeconfig --kubeconfig "#{kubeconfig_path}" --name "#{cluster_name}")
+      )
+      |> dbg()
     end
 
     :ok
@@ -150,6 +162,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
       name: "kompost.chuge.li"
     webhooks:
       - name: "postgres.kompost.chuge.li"
+        admissionReviewVersions: ["v1"]
         matchPolicy: Equivalent
         rules:
           - operations: ['CREATE','UPDATE']

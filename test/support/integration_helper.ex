@@ -2,12 +2,5 @@ defmodule Kompost.Test.IntegrationHelper do
   @moduledoc false
 
   @spec conn!() :: K8s.Conn.t()
-  def conn!() do
-    {:ok, conn} =
-      "TEST_KUBECONFIG"
-      |> System.get_env("./test/integration/cluster.yaml")
-      |> K8s.Conn.from_file(insecure_skip_tls_verify: true)
-
-    conn
-  end
+  def conn!(), do: Kompost.K8sConn.get!(:test)
 end

@@ -38,8 +38,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
     instance =
       "database-integration-test-#{:rand.uniform(10000)}"
       |> ResourceHelper.instance_with_plain_pw(@namespace)
-      |> GlobalResourceHelper.k8s_apply(conn)
-      |> GlobalResourceHelper.wait_until_observed(conn, timeout)
+      |> GlobalResourceHelper.k8s_apply!(conn)
+      |> GlobalResourceHelper.wait_until_observed!(conn, timeout)
 
     [conn: conn, instance: instance, timeout: timeout]
   end
@@ -62,9 +62,10 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.database(@namespace, instance)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert %{"status" => "True"} = conditions["Connection"]
@@ -86,9 +87,10 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
           @namespace,
           %{"metadata" => %{"namespace" => @namespace, "name" => "does-not-exist"}}
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert %{"status" => "False"} = conditions["Connection"]
@@ -110,9 +112,10 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
           @namespace,
           instance
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       assert [_ | _] = created_resource["status"]["users"]
 
@@ -123,7 +126,6 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
           |> K8s.Client.run()
 
         %{
-          "DB_HOST" => hostname,
           "DB_NAME" => database,
           "DB_PASS" => password,
           "DB_PORT" => port,
@@ -131,7 +133,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
         } = Map.new(data, fn {key, value} -> {key, Base.decode64!(value)} end)
 
         conn_args = [
-          hostname: hostname,
+          hostname: "127.0.0.1",
           port: port,
           username: username,
           password: password,
@@ -145,7 +147,6 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
 
     @tag :integration
     @tag :postgres
-    @tag :wip
     test "Parameters are applied upon DB creation", %{
       conn: conn,
       resource_name: resource_name,
@@ -167,9 +168,11 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
             is_template: true
           }
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
+
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert %{"status" => "True"} = conditions["Connection"]
       assert %{"status" => "True"} = conditions["Database"]

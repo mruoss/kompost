@@ -1,29 +1,28 @@
 CLUSTER_NAME=kompost-test
-KUBECONFIG_PATH?=./test/integration/cluster.yaml
-
+ELIXIR_IMAGE=hexpm/elixir:1.15.0-erlang-26.0.1-alpine-3.18.2
+ERLANG_IMAGE=hexpm/erlang:26.0.1-alpine-3.18.2
 
 .PHONY: docker_compose
 docker_compose:
 	docker-compose -f test/integration/docker-compose.yml up -d --remove-orphans
 
-test/integration/cluster.yaml:
-	$(MAKE) delete.cluster create.cluster
-	kind export kubeconfig --kubeconfig ${KUBECONFIG_PATH} --name "${CLUSTER_NAME}" 
-
 .PHONY: test
-test: docker_compose
-test: test/integration/cluster.yaml
+#test: docker_compose
 test: ## Run integration tests using k3d `make cluster`
 	MIX_ENV=test mix compile
+	MIX_ENV=test mix kompost.gen.periphery
 	MIX_ENV=test mix kompost.gen.manifest
-	kubectl config use-context kind-${CLUSTER_NAME}
-	TEST_KUBECONFIG=${KUBECONFIG_PATH} mix test --include integration --cover
+	mix test --include integration --cover
 
-.PHONY: create.cluster
-create.cluster: 
-	kind create cluster --wait 600s --name "${CLUSTER_NAME}"
+.PHONY: e2e
+e2e: SHELL := /bin/bash
+e2e:
+	MIX_ENV=test mix compile
+	docker buildx build --build-arg ELIXIR_IMAGE=${ELIXIR_IMAGE} --build-arg ERLANG_IMAGE=${ERLANG_IMAGE} -t kompost:e2e --load .
+	kind load docker-image --name ${CLUSTER_NAME} kompost:e2e
+	MIX_ENV=test mix kompost.gen.periphery
+	kubectl config use-context kind-${CLUSTER_NAME} 
+	MIX_ENV=prod mix compile
+	MIX_ENV=prod mix kompost.gen.manifest --image kompost:e2e --out - | kubectl apply -f -
+	POSTGRES_HOST=postgres.postgres.svc.cluster.local TEMPORAL_HOST=temporal.temporal.svc.cluster.local mix test --include integration --include e2e --no-start --cover
 
-.PHONY: delete.cluster
-delete.cluster:
-	- kind delete cluster --kubeconfig ${KUBECONFIG_PATH} --name "${CLUSTER_NAME}"
-	rm -f ${KUBECONFIG_PATH}

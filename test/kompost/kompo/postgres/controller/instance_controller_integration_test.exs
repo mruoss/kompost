@@ -68,9 +68,10 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_secret_ref(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Credentials"]["status"]
@@ -83,14 +84,15 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
 
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_secret_ref(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Credentials"]["status"]
@@ -106,9 +108,10 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_plain_pw(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Credentials"]["status"]
@@ -123,14 +126,15 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
 
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_secret_ref(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Connected"]["status"]
@@ -146,9 +150,10 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_plain_pw(@namespace, "wrong_password")
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Connected"]["status"]
@@ -163,14 +168,15 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
 
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_secret_ref(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Privileged"]["status"]

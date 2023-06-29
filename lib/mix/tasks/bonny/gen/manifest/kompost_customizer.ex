@@ -17,21 +17,89 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
   end
   """
 
+  import YamlElixir.Sigil
+
   @spec override(Bonny.Resource.t()) :: Bonny.Resource.t()
 
   def override(%{kind: "Deployment"} = resource) do
-    put_in(
-      resource,
+    image =
+      get_in(
+        resource,
+        [
+          :spec,
+          :template,
+          :spec,
+          :containers,
+          Access.filter(&(&1[:name] == "kompost")),
+          :image
+        ]
+      )
+      |> List.first()
+
+    resource
+    |> update_in(
+      [:spec, :template, :spec, Access.key(:volumes, [])],
+      &[%{"name" => "certs", "secret" => %{"secretName" => "tls-certs", "optional" => true}} | &1]
+    )
+    |> update_in(
       [
-        "spec",
-        "template",
-        "spec",
-        "containers",
-        Access.filter(&(&1["name"] == "kompost")),
-        "ports"
+        :spec,
+        :template,
+        :spec,
+        :containers,
+        Access.filter(&(&1[:name] == "kompost")),
+        Access.key(:volumeMounts, [])
+      ],
+      &[%{"name" => "certs", "mountPath" => "/mnt/cert"} | &1]
+    )
+    |> update_in(
+      [
+        :spec,
+        :template,
+        :spec,
+        Access.key(:initContainers, [])
+      ],
+      fn init_containers ->
+        certs = %{
+          "name" => "init-certificates",
+          "image" => image,
+          "args" => ["eval", "Kompost.Webhooks.bootstrap_tls(:prod)"]
+        }
+
+        [certs | init_containers]
+      end
+    )
+    |> put_in(
+      [
+        :spec,
+        :template,
+        :spec,
+        :containers,
+        Access.filter(&(&1[:name] == "kompost")),
+        :ports
       ],
       [%{"containerPort" => 4000, "name" => "webhooks"}]
     )
+  end
+
+  def override(%{kind: "Role"} = resource) do
+    Map.update!(resource, :rules, fn rules ->
+      [
+        ~y"""
+        apiGroups: ["admissionregistration.k8s.io"]
+        resources:
+          - validatingwebhookconfigurations
+          - mutatingwebhookconfigurations
+        verbs: ["get", "list", "update", "patch"]
+        """,
+        ~y"""
+        apiGroups: ["apiextensions.k8s.io"]
+        resources: ["customresourcedefinitions"]
+        verbs: ["get", "list", "update", "patch"]
+        """
+        | rules
+      ]
+    end)
   end
 
   def override(%{kind: "CustomResourceDefinition"} = resource) do

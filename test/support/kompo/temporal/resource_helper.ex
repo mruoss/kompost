@@ -13,7 +13,7 @@ defmodule Kompost.Test.Kompo.Temporal.ResourceHelper do
       name: #{name}
       namespace: #{ns}
     spec:
-      host: 127.0.0.1
+      host: #{System.get_env("TEMPORAL_HOST", "127.0.0.1")}
       port: #{System.fetch_env!("TEMPORAL_EXPOSED_PORT")}
     """
     |> apply_opts(opts)
