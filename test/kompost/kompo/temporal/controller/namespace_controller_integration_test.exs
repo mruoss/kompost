@@ -38,10 +38,10 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     api_server =
       "namespace-integration-test-#{:rand.uniform(10000)}"
       |> ResourceHelper.api_server(@namespace)
-      |> GlobalResourceHelper.k8s_apply(conn)
-      |> GlobalResourceHelper.wait_until_observed(conn, timeout)
+      |> GlobalResourceHelper.k8s_apply!(conn)
+      |> GlobalResourceHelper.wait_until_observed!(conn, timeout)
 
-    GlobalResourceHelper.wait_for_condition(api_server, conn, "Connected", timeout)
+    GlobalResourceHelper.wait_for_condition!(api_server, conn, "Connected", timeout)
 
     [conn: conn, timeout: timeout, api_server: api_server]
   end
@@ -68,15 +68,17 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
             "workflowExecutionRetentionPeriod" => 7000
           }
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Connected"]["status"]
     end
 
     @tag :integration
+    @tag :wip
     test "Connected condition status is True if connection to temporal was established",
          %{
            conn: conn,
@@ -94,9 +96,9 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
             "workflowExecutionRetentionPeriod" => 7000
           }
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Connected", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Connected", timeout)
     end
   end
 
@@ -120,9 +122,9 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     #         "workflowExecutionRetentionPeriod" => -7000
     #       }
     #     )
-    #     |> GlobalResourceHelper.k8s_apply(conn)
+    #     |> GlobalResourceHelper.k8s_apply!(conn)
 
-    #   created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+    #   created_resource = GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
     #   conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
     #   assert "True" == conditions["Connected"]["status"]
@@ -147,10 +149,10 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
             "workflowExecutionRetentionPeriod" => 24 * 60 * 60
           }
         )
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Connected", timeout)
-      GlobalResourceHelper.wait_for_condition(created_resource, conn, "Created", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Connected", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Created", timeout)
     end
   end
 end

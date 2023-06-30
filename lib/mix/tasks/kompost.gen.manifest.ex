@@ -34,7 +34,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     cluster_name = "kompost-#{env}"
 
     Application.ensure_all_started(:k8s)
-    ensure_cluster(cluster_name)
+    ensure_cluster(cluster_name, "./test/integration/kubeconfig-#{env}.yaml")
     conn = K8sConn.get!(env)
     ensure_namespace(conn, Keyword.fetch!(opts, :namespace))
 
@@ -68,13 +68,26 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     |> Mix.Bonny.render(out)
   end
 
-  @spec ensure_cluster(binary()) :: :ok
-  defp ensure_cluster(cluster_name) do
+  @spec ensure_cluster(cluster_name :: binary(), kubeconfig_path :: binary()) :: :ok
+  defp ensure_cluster(cluster_name, kubeconfig_path) do
     {clusters, 0} = System.cmd("kind", ~w(get clusters))
 
     if cluster_name not in String.split(clusters, "\n", trim: true) do
       Mix.Shell.IO.info("Creating kind cluster #{cluster_name}")
-      Mix.Shell.IO.cmd("kind create cluster --name #{cluster_name}")
+
+      0 =
+        Mix.Shell.IO.cmd(
+          "kind create cluster --name #{cluster_name} --config ./test/integration/kind-cluster.yml"
+        )
+    end
+
+    if not File.exists?(kubeconfig_path) do
+      Mix.Shell.IO.info("Generating kubeconfig file: #{kubeconfig_path}")
+
+      0 =
+        Mix.Shell.IO.cmd(
+          ~s(kind export kubeconfig --kubeconfig "#{kubeconfig_path}" --name "#{cluster_name}")
+        )
     end
 
     :ok
@@ -100,10 +113,12 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     image = Keyword.fetch!(opts, :image)
     namespace = Keyword.fetch!(opts, :namespace)
 
-    deployment =
-      Operator.deployment(image, namespace)
-
-    [deployment | generate_manifest(:dev, opts)]
+    [
+      Operator.deployment(image, namespace),
+      svc_manifest(namespace),
+      webhook_config_manifest(namespace)
+      | generate_manifest(:dev, opts)
+    ]
   end
 
   defp generate_manifest(_, opts) do
@@ -116,5 +131,53 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
         Operator.service_account(namespace),
         Operator.cluster_role_binding(namespace)
       ]
+  end
+
+  @spec svc_manifest(namespace :: binary()) :: map()
+  def svc_manifest(namespace) do
+    ~y"""
+    apiVersion: v1
+    kind: Service
+    metadata:
+      name: kompost
+      namespace: #{namespace}
+      labels:
+        k8s-app: kompost
+    spec:
+      ports:
+      - name: webhooks
+        port: 443
+        targetPort: webhooks
+        protocol: TCP
+      selector:
+        k8s-app: kompost
+    """
+  end
+
+  @spec webhook_config_manifest(namespace :: binary()) :: map()
+  defp webhook_config_manifest(namespace) do
+    ~y"""
+    apiVersion: admissionregistration.k8s.io/v1
+    kind: ValidatingWebhookConfiguration
+    metadata:
+      name: "kompost"
+    webhooks:
+      - name: "postgres.kompost.chuge.li"
+        admissionReviewVersions: ["v1"]
+        matchPolicy: Equivalent
+        rules:
+          - operations: ['UPDATE']
+            apiGroups: ['kompost.chuge.li']
+            apiVersions: ['v1alpha1']
+            resources: ['postgresdatabases']
+        failurePolicy: 'Ignore' # Fail-open (optional)
+        sideEffects: None
+        clientConfig:
+          service:
+            namespace: #{namespace}
+            name: kompost
+            path: /postgres/admission-review/validating
+            port: 443
+    """
   end
 end

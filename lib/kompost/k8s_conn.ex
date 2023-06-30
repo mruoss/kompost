@@ -12,27 +12,32 @@ defmodule Kompost.K8sConn do
   @spec get!(env :: atom()) :: K8s.Conn.t()
   def get!(:dev) do
     {:ok, conn} =
-      K8s.Conn.from_file("~/.kube/config",
-        context: "kind-kompost-dev",
-        insecure_skip_tls_verify: true
-      )
+      "KUBECONFIG"
+      |> System.get_env("./test/integration/kubeconfig-dev.yaml")
+      |> K8s.Conn.from_file(insecure_skip_tls_verify: true)
 
     conn
   end
 
   def get!(:test) do
     {:ok, conn} =
-      K8s.Conn.from_file("~/.kube/config",
-        context: "kind-kompost-test",
-        insecure_skip_tls_verify: true
-      )
+      "KUBECONFIG"
+      |> System.get_env("./test/integration/kubeconfig-test.yaml")
+      |> K8s.Conn.from_file(insecure_skip_tls_verify: true)
 
     conn
   end
 
   def get!(_) do
-    {:ok, conn} = K8s.Conn.from_service_account()
-    # make this configurable?
-    struct!(conn, insecure_skip_tls_verify: true)
+    kubeconfig = System.get_env("KUBECONFIG")
+
+    {:ok, conn} =
+      if not is_nil(kubeconfig) and File.exists?(kubeconfig) do
+        K8s.Conn.from_file(kubeconfig, insecure_skip_tls_verify: true)
+      else
+        K8s.Conn.from_service_account(insecure_skip_tls_verify: true)
+      end
+
+    conn
   end
 end

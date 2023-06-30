@@ -4,6 +4,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   require Logger
 
   alias Kompost.Kompo.Postgres.Database
+  alias Kompost.Kompo.Postgres.Database.Params
   alias Kompost.Kompo.Postgres.Instance
   alias Kompost.Kompo.Postgres.Privileges
   alias Kompost.Kompo.Postgres.User
@@ -33,6 +34,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
       when action in [:add, :modify, :reconcile] do
     resource = axn.resource
     db_name = Database.name(resource)
+    db_params = Params.new!(resource["spec"]["params"])
 
     instance_id =
       resource["spec"]["instanceRef"]
@@ -47,7 +49,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              "Connected to the referenced PostgreSQL instance."
            ),
-         {:database, axn, :ok} <- {:database, axn, Database.apply(db_name, conn)},
+         {:database, axn, :ok} <- {:database, axn, Database.apply(db_name, db_params, conn)},
          axn <-
            set_condition(
              axn,

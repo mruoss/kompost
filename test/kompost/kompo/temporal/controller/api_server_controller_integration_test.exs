@@ -29,8 +29,8 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
     api_server =
       "namespace-integration-test-#{:rand.uniform(10000)}"
       |> ResourceHelper.api_server(@namespace)
-      |> GlobalResourceHelper.k8s_apply(conn)
-      |> GlobalResourceHelper.wait_until_observed(conn, timeout)
+      |> GlobalResourceHelper.k8s_apply!(conn)
+      |> GlobalResourceHelper.wait_until_observed!(conn, timeout)
 
     [conn: conn, timeout: timeout, api_server: api_server]
   end
@@ -50,10 +50,11 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
       created_resource =
         resource_name
         |> ResourceHelper.api_server(@namespace)
-        |> put_in(~w(spec port), 0)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> put_in(~w(spec host), "nonexistent")
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "False" == conditions["Connected"]["status"]
@@ -69,9 +70,10 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
       created_resource =
         resource_name
         |> ResourceHelper.api_server(@namespace)
-        |> GlobalResourceHelper.k8s_apply(conn)
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource = GlobalResourceHelper.wait_until_observed(created_resource, conn, timeout)
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
       conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
       assert "True" == conditions["Connected"]["status"]

@@ -55,16 +55,101 @@ jobs:
           fi
 
           echo "cache_src=ghcr.io/mruoss/kompost:dev${DEST}" >> $GITHUB_OUTPUT
+          echo "e2e_image=ghcr.io/mruoss/kompost:e2e${DEST}" >> $GITHUB_OUTPUT
           echo "dest_image=ghcr.io/mruoss/kompost:${TAG#v}${DEST}" >> $GITHUB_OUTPUT
           echo "src_image_erlang=${ERLANG_IMAGE}${SRC}" >> $GITHUB_OUTPUT
           echo "src_image_elixir=${ELIXIR_IMAGE}${SRC}" >> $GITHUB_OUTPUT
+
+      - name: Build E2E Image
+        uses: docker/build-push-action@v4
+        id: build_and_push_e2e
+        with:
+          push: false
+          load: true
+          tags: ${{ steps.prepare_vars.outputs.e2e_image }}
+          cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
+          cache-to: type=inline
+          build-args: |
+            ERLANG_IMAGE=${{ steps.prepare_vars.outputs.src_image_erlang }}
+            ELIXIR_IMAGE=${{ steps.prepare_vars.outputs.src_image_elixir }}
+
+      - uses: engineerd/setup-kind@v0.5.0
+        id: kind
+        with:
+          version: v0.20.0
+          name: kompost-test
+          config: ./test/integration/kind-cluster.yml
+
+      - name: Setup elixir
+        id: beam
+        uses: erlef/setup-beam@v1
+        with:
+          version-file: .tool-versions
+          version-type: strict
+          install-rebar: true
+          install-hex: true
+
+      - name: Retrieve Deps to Cache
+        uses: actions/cache/restore@v3
+        id: deps-folder-cache-test-restore
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - name: Retrieve Build Folder from Cache
+        uses: actions/cache/restore@v3
+        id: build-folder-cache-restore
+        with:
+          path: _build
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-${{github.workflow}}-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - name: Compile app
+        run: |
+          mix deps.get
+          MIX_ENV=test mix compile
+          MIX_ENV=prod mix compile
+
+      - name: Save Deps to Cache
+        uses: actions/cache/save@v3
+        id: deps-folder-cache-test-save
+        with:
+          path: deps
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - name: Save Build Folder to Cache
+        uses: actions/cache/save@v3
+        id: build-folder-cache-save
+        with:
+          path: _build
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-${{github.workflow}}-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+
+      - name: Run e2e tests
+        id: run-e2e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          kubectl create ns kompost
+          MIX_ENV=test mix kompost.gen.manifest
+          kind load docker-image --name kompost-test "${{ steps.prepare_vars.outputs.e2e_image }}"
+          MIX_ENV=test mix kompost.gen.periphery
+          kubectl config use-context kind-kompost-test
+          MIX_ENV=prod mix kompost.gen.manifest --image "${{ steps.prepare_vars.outputs.e2e_image }}" --out - | kubectl apply -f -
+
+          echo "Waiting for kompost pods to get ready"
+          kubectl wait pods -n kompost -l k8s-app=kompost --for condition=Ready --timeout=300s
+
+          MIX_ENV=test POSTGRES_HOST=postgres.postgres.svc.cluster.local TEMPORAL_HOST=temporal.temporal.svc.cluster.local mix coveralls.github --include integration --include e2e --no-start
+
+      - name: Logs
+        if: steps.run-e2e.outcome == 'failure' && failure()
+        run: kubectl logs -n kompost -l k8s-app=kompost --since=1h
 
       - name: Build and push
         uses: docker/build-push-action@v4
         id: build_and_push
         with:
           push: ${{ github.ref_type == 'tag' }}
-          tags: ${{ steps.prepare_vars.outputs.dest_image }}
+          tags: "${{ steps.prepare_vars.outputs.dest_image }},${{ steps.prepare_vars.outputs.cache_src }}"
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
           cache-to: type=inline
@@ -135,8 +220,8 @@ jobs:
         id: beam
         uses: erlef/setup-beam@v1
         with:
-          elixir-version: 1.14.x
-          otp-version: 25.x
+          version-file: .tool-versions
+          version-type: strict
           install-rebar: true
           install-hex: true
 

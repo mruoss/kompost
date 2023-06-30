@@ -29,6 +29,34 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
                     type: string
                   name:
                     type: string
+              params:
+                description: "Parameters passed to CREATE TEMPLATE."
+                type: object
+                properties:
+                  template:
+                    description: "(Optional) The name of the template from which to create the new database."
+                    type: string
+                  encoding:
+                    description: "(Optional) Character set encoding to use in the new database. Specify a string constant (e.g., 'SQL_ASCII'), or an integer encoding number."
+                    x-kubernetes-int-or-string: true
+                    anyOf:
+                      - type: integer
+                      - type: string
+                  locale:
+                    description: "(Optional) This is a shortcut for setting lc_collate and lc_type at once."
+                    type: string
+                  lc_collate:
+                    description: "(Optional) Collation order (LC_COLLATE) to use in the new database."
+                    type: string
+                  lc_ctype:
+                    description: "(Optional) Character classification (LC_CTYPE) to use in the new database."
+                    type: string
+                  connection_limit:
+                    description: "(Optional) How many concurrent connections can be made to this database. -1 (the default) means no limit."
+                    type: integer
+                  is_template:
+                    description: "(Optional) If true, then this database can be cloned by any user with CREATEDB privileges; if false (the default), then only superusers or the owner of the database can clone it."
+                    type: boolean
           :status:
             :type: :object
             :properties:

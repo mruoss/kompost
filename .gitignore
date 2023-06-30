@@ -25,6 +25,6 @@ kompost-*.tar
 # Temporary files, for example, from tests.
 /tmp/
 
-/test/integration/cluster*.yaml
+/test/integration/kubeconfig*.yaml
 
 /manifest*.yaml
