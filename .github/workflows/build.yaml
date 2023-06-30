@@ -139,6 +139,8 @@ jobs:
 
       - name: Run e2e tests
         id: run-e2e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           kubectl create ns kompost
           MIX_ENV=test mix kompost.gen.manifest

@@ -29,8 +29,15 @@ defmodule Kompost.K8sConn do
   end
 
   def get!(_) do
-    {:ok, conn} = K8s.Conn.from_service_account()
-    # make this configurable?
-    struct!(conn, insecure_skip_tls_verify: true)
+    kubeconfig = System.get_env("KUBECONFIG")
+
+    {:ok, conn} =
+      if not is_nil(kubeconfig) and File.exists?(kubeconfig) do
+        K8s.Conn.from_file(kubeconfig, insecure_skip_tls_verify: true)
+      else
+        K8s.Conn.from_service_account(insecure_skip_tls_verify: true)
+      end
+
+    conn
   end
 end

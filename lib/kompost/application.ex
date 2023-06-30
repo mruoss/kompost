@@ -1,7 +1,7 @@
 defmodule Kompost.Application do
   @moduledoc false
 
-  @spec bandit(:adom) :: {module(), keyword()}
+  @spec bandit(atom()) :: {module(), keyword()}
   defp bandit(:prod) do
     {Bandit,
      plug: Kompost.Webhooks.Router,
