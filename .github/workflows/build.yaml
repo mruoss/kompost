@@ -89,26 +89,19 @@ jobs:
           install-rebar: true
           install-hex: true
 
-      - name: Retrieve Deps Cache
+      - name: Retrieve Deps to Cache
         uses: actions/cache/restore@v3
         id: deps-folder-cache-test-restore
         with:
           path: deps
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
-      - name: Retrieve Test Build Cache
+      - name: Retrieve Build Folder from Cache
         uses: actions/cache/restore@v3
-        id: build-folder-cache-test-restore
+        id: build-folder-cache-restore
         with:
-          path: _build/test
-          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-test-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
-
-      - name: Retrieve Prod Build Cache
-        uses: actions/cache/restore@v3
-        id: build-folder-cache-prod-restore
-        with:
-          path: _build/prod
-          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-prod-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          path: _build
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-${{github.workflow}}-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Compile app
         run: |
@@ -116,26 +109,19 @@ jobs:
           MIX_ENV=test mix compile
           MIX_ENV=prod mix compile
 
-      - name: Save Deps Cache
+      - name: Save Deps to Cache
         uses: actions/cache/save@v3
         id: deps-folder-cache-test-save
         with:
           path: deps
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
-      - name: Save Test Build Cache
+      - name: Save Build Folder to Cache
         uses: actions/cache/save@v3
-        id: build-folder-cache-test-save
+        id: build-folder-cache-save
         with:
-          path: _build/test
-          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-test-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
-
-      - name: Save Prod Build Cache
-        uses: actions/cache/save@v3
-        id: build-folder-cache-prod-save
-        with:
-          path: _build/prod
-          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-prod-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
+          path: _build
+          key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-${{github.workflow}}-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Run e2e tests
         id: run-e2e
