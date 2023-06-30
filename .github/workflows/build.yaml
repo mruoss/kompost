@@ -138,16 +138,23 @@ jobs:
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-prod-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Run e2e tests
+        id: run-e2e
         run: |
           kubectl create ns kompost
           MIX_ENV=test mix kompost.gen.manifest
-          kind load docker-image --name kompost-test ${{ steps.prepare_vars.outputs.e2e_image }}
+          kind load docker-image --name kompost-test "${{ steps.prepare_vars.outputs.e2e_image }}"
           MIX_ENV=test mix kompost.gen.periphery
           kubectl config use-context kind-kompost-test
-          MIX_ENV=prod mix kompost.gen.manifest --image ${{ steps.prepare_vars.outputs.e2e_image }} --out - | kubectl apply -f -
+          MIX_ENV=prod mix kompost.gen.manifest --image "${{ steps.prepare_vars.outputs.e2e_image }}" --out - | kubectl apply -f -
+
+          echo "Waiting for kompost pods to get ready"
           kubectl wait pods -n kompost -l k8s-app=kompost --for condition=Ready --timeout=300s
 
-          MIX_ENV=test POSTGRES_HOST=postgres.postgres.svc.cluster.local TEMPORAL_HOST=temporal.temporal.svc.cluster.local mix coveralls.github --include integration --include e2e --no-start --cover
+          MIX_ENV=test POSTGRES_HOST=postgres.postgres.svc.cluster.local TEMPORAL_HOST=temporal.temporal.svc.cluster.local mix coveralls.github --include integration --include e2e --no-start
+
+      - name: Logs
+        if: steps.run-e2e.outcome == 'failure' && failure()
+        run: kubectl logs -n kompost -l k8s-app=kompost --since=1h
 
       - name: Build and push
         uses: docker/build-push-action@v4

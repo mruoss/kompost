@@ -50,7 +50,7 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
       created_resource =
         resource_name
         |> ResourceHelper.api_server(@namespace)
-        |> put_in(~w(spec port), 0)
+        |> put_in(~w(spec host), "nonexistent")
         |> GlobalResourceHelper.k8s_apply!(conn)
 
       created_resource =

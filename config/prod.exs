@@ -5,4 +5,5 @@ config :logger,
     [library: :bonny],
     [library: :k8s],
     [library: :k8s_webhoox]
-  ]
+  ],
+  level: :info
