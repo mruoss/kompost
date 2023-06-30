@@ -161,7 +161,7 @@ jobs:
         id: build_and_push
         with:
           push: ${{ github.ref_type == 'tag' }}
-          tags: "${{ steps.prepare_vars.outputs.dest_image }},${{ steps.prepare_vars.outputs.e2e_image }}"
+          tags: "${{ steps.prepare_vars.outputs.dest_image }},${{ steps.prepare_vars.outputs.cache_src }}"
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
           cache-to: type=inline
