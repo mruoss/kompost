@@ -1,4 +1,4 @@
-defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
+defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegrationTest do
   use ExUnit.Case, async: true
 
   import YamlElixir.Sigil
@@ -6,7 +6,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
   alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
-  @namespace "postgres-instance-controller-integration"
+  @namespace "pginst-controller-integration"
 
   @spec password_secret(name :: binary()) :: map()
   defp password_secret(name) do

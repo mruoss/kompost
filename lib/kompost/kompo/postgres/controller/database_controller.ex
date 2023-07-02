@@ -8,6 +8,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   alias Kompost.Kompo.Postgres.Instance
   alias Kompost.Kompo.Postgres.Privileges
   alias Kompost.Kompo.Postgres.User
+
+  alias Kompost.Tools.NamespaceAccess
   alias Kompost.Tools.Password
 
   import YamlElixir.Sigil
@@ -33,15 +35,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
     resource = axn.resource
+    namespace = resource["metadata"]["namespace"]
     db_name = Database.name(resource)
     db_params = Params.new!(resource["spec"]["params"])
+    instance = resource |> instance_id() |> Instance.lookup()
 
-    instance_id =
-      resource["spec"]["instanceRef"]
-      |> Map.put_new("namespace", resource["metadata"]["namespace"])
-      |> Instance.get_id()
-
-    with {:instance, [{conn, conn_args}]} <- {:instance, Instance.lookup(instance_id)},
+    with {:instance, [{conn, conn_args, allowed_namespaces}]} <- {:instance, instance},
          axn <-
            set_condition(
              axn,
@@ -49,6 +48,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
              true,
              "Connected to the referenced PostgreSQL instance."
            ),
+         {:can_access, axn, true} <-
+           {:can_access, axn, NamespaceAccess.can_access?(namespace, allowed_namespaces)},
          {:database, axn, :ok} <- {:database, axn, Database.apply(db_name, db_params, conn)},
          axn <-
            set_condition(
@@ -93,6 +94,16 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
         |> failure_event(message: message)
         |> set_condition("Database", false, message)
 
+      {:can_access, axn, false} ->
+        message =
+          ~s(The referenced PostgresClusterInstance cannot be accesed. Check the annotation "kompost.chuge.li/allowed_namespaces" on the PostgresClusterInstance.)
+
+        Logger.warning("#{axn.action} failed. #{message}")
+
+        axn
+        |> failure_event(message: message)
+        |> set_condition("ClusterInstanceAccess", false, message)
+
       {:app_user, {:error, axn, message}} ->
         Logger.warning("#{axn.action} failed. #{message}")
 
@@ -123,13 +134,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource = axn.resource
     db_name = Database.name(resource)
     users = resource["status"]["users"]
+    instance = resource |> instance_id() |> Instance.lookup()
 
-    instance_id =
-      resource["spec"]["instanceRef"]
-      |> Map.put_new("namespace", resource["metadata"]["namespace"])
-      |> Instance.get_id()
-
-    with {:instance, [{conn, _conn_args}]} <- {:instance, Instance.lookup(instance_id)},
+    with {:instance, [{conn, _conn_args, _allowed_namespaces}]} <- {:instance, instance},
          {:users, axn, :ok} <- {:users, axn, drop_users(users, db_name, conn)},
          {:database, axn, :ok} <- {:database, axn, Database.drop(db_name, conn)} do
       {:ok, axn}
@@ -220,6 +227,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     %{"session_authorization" => superuser} = Postgrex.parameters(conn)
 
     users
+    |> List.wrap()
     |> Enum.uniq()
     |> Enum.find_value(:ok, fn
       %{"username" => username} ->
@@ -249,5 +257,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
     resource["metadata"]["annotations"]["kompost.chuge.li/deletion-policy"] != "abandon" and
       conditions["Connection"]["status"] == "True"
+  end
+
+  @spec instance_id(resource :: map()) :: Instance.id()
+  defp instance_id(%{"spec" => %{"instanceRef" => %{}}} = resource) do
+    {resource["metadata"]["namespace"], resource["spec"]["instanceRef"]["name"]}
+  end
+
+  defp instance_id(%{"spec" => %{"clusterInstanceRef" => %{}}} = resource) do
+    {:cluster, resource["spec"]["clusterInstanceRef"]["name"]}
   end
 end

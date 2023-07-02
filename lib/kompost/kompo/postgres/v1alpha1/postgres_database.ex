@@ -20,13 +20,18 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
         :properties:
           :spec:
             type: object
-            required: ["instanceRef"]
+            anyOf:
+              - required: ["instanceRef"]
+              - required: ["clusterInstanceRef"]
             properties:
               instanceRef:
                 type: object
                 properties:
-                  namespace:
+                  name:
                     type: string
+              clusterInstanceRef:
+                type: object
+                properties:
                   name:
                     type: string
               params:

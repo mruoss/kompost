@@ -5,6 +5,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
   alias Kompost.Kompo.Postgres.Instance
 
+  alias Kompost.Tools.NamespaceAccess
+
   step Bonny.Pluggable.SkipObservedGenerations
 
   step Bonny.Pluggable.Finalizer,
@@ -24,11 +26,13 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
   @spec handle_event(Bonny.Axn.t(), Keyword.t()) :: Bonny.Axn.t()
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
-    id = Instance.get_id(axn.resource)
+    id = instance_id(axn.resource)
+    allowed_ns = allowed_namespaces(axn.resource)
 
     with {:cred, {:ok, connection_args}} <- {:cred, get_connection_args(axn.resource, axn.conn)},
          axn <- set_condition(axn, "Credentials", true),
-         {:conn, axn, {:ok, conn}} <- {:conn, axn, Instance.connect(id, connection_args)},
+         {:conn, axn, {:ok, conn}} <-
+           {:conn, axn, Instance.connect(id, connection_args, allowed_ns)},
          axn <- set_condition(axn, "Connected", true, "Connection to database was established"),
          {:privileges, :ok} <- {:privileges, Instance.check_privileges(conn)},
          axn <-
@@ -43,7 +47,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
         |> set_condition("Credentials", false, Exception.message(error))
 
       {:conn, axn, {:error, error}} ->
-        message = Exception.message(error)
+        message = if is_exception(error), do: Exception.message(error), else: inspect(error)
         Logger.warning("#{axn.action} failed. #{message}")
 
         axn
@@ -62,7 +66,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
   def handle_event(%Bonny.Axn{action: :delete} = axn, _opts) do
     :ok =
       axn.resource
-      |> Instance.get_id()
+      |> instance_id()
       |> Instance.disconnect()
 
     success_event(axn)
@@ -122,5 +126,21 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
     else
       {:ok, axn}
     end
+  end
+
+  @spec instance_id(resource :: map()) :: Instance.id()
+  defp instance_id(%{"kind" => "PostgresInstance", "metadata" => metadata}),
+    do: {metadata["namespace"], metadata["name"]}
+
+  defp instance_id(%{"kind" => "PostgresClusterInstance", "metadata" => metadata}),
+    do: {:cluster, metadata["name"]}
+
+  @spec allowed_namespaces(map()) :: NamespaceAccess.allowed_namespaces()
+  defp(allowed_namespaces(%{"kind" => "PostgresInstance"} = resource)) do
+    [~r/^#{resource["metadata"]["namespace"]}$/]
+  end
+
+  defp allowed_namespaces(%{"kind" => "PostgresClusterInstance"} = resource) do
+    NamespaceAccess.allowed_namespaces!(resource)
   end
 end

@@ -12,12 +12,13 @@ setup: ## Run integration tests using k3d `make cluster`
 	mix compile
 	mix kompost.gen.manifest
 
+.PHONY: test
 #test: docker_compose
 test: ## Run integration tests using k3d `make cluster`
 	MIX_ENV=test mix compile
 	MIX_ENV=test mix kompost.gen.manifest
 	MIX_ENV=test mix kompost.gen.periphery
-	mix test --include integration --cover
+	mix test --include integration --cover --timeout 30000
 
 .PHONY: e2e
 e2e: SHELL := /bin/bash
@@ -34,4 +35,9 @@ e2e:
 	POSTGRES_HOST=postgres.postgres.svc.cluster.local TEMPORAL_HOST=temporal.temporal.svc.cluster.local mix test --include integration --include e2e --no-start --cover
 	kubectl delete ns kompost
 
-
+.PHONY: delete
+delete:
+	kind delete cluster --name kompost-test
+	rm -f test/integration/kubeconfig-test.yaml
+	kind delete cluster --name kompost-dev
+	rm -f test/integration/kubeconfig-dev.yaml

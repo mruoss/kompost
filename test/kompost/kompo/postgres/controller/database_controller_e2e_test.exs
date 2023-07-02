@@ -63,7 +63,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerE2eTest do
         resource_name
         |> ResourceHelper.database(
           @namespace,
-          instance,
+          {:namespaced, instance},
           %{
             template: "template0",
             encoding: "SQL_ASCII",

@@ -78,7 +78,6 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     end
 
     @tag :integration
-    @tag :wip
     test "Connected condition status is True if connection to temporal was established",
          %{
            conn: conn,
