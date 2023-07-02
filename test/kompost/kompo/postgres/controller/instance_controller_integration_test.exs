@@ -1,4 +1,4 @@
-defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
+defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegrationTest do
   use ExUnit.Case, async: true
 
   import YamlElixir.Sigil

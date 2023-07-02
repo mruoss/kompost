@@ -35,13 +35,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource = axn.resource
     db_name = Database.name(resource)
     db_params = Params.new!(resource["spec"]["params"])
+    instance = resource |> instance_id() |> Instance.lookup()
 
-    instance_id =
-      resource["spec"]["instanceRef"]
-      |> Map.put_new("namespace", resource["metadata"]["namespace"])
-      |> Instance.get_id()
-
-    with {:instance, [{conn, conn_args}]} <- {:instance, Instance.lookup(instance_id)},
+    with {:instance, [{conn, conn_args}]} <- {:instance, instance},
          axn <-
            set_condition(
              axn,
@@ -123,13 +119,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource = axn.resource
     db_name = Database.name(resource)
     users = resource["status"]["users"]
+    instance = resource |> instance_id() |> Instance.lookup()
 
-    instance_id =
-      resource["spec"]["instanceRef"]
-      |> Map.put_new("namespace", resource["metadata"]["namespace"])
-      |> Instance.get_id()
-
-    with {:instance, [{conn, _conn_args}]} <- {:instance, Instance.lookup(instance_id)},
+    with {:instance, [{conn, _conn_args}]} <- {:instance, instance},
          {:users, axn, :ok} <- {:users, axn, drop_users(users, db_name, conn)},
          {:database, axn, :ok} <- {:database, axn, Database.drop(db_name, conn)} do
       {:ok, axn}
@@ -249,5 +241,14 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
     resource["metadata"]["annotations"]["kompost.chuge.li/deletion-policy"] != "abandon" and
       conditions["Connection"]["status"] == "True"
+  end
+
+  @spec instance_id(resource :: map()) :: Instance.id()
+  defp instance_id(%{"spec" => %{"instanceRef" => %{}}} = resource) do
+    {resource["metadata"]["namespace"], resource["spec"]["instanceRef"]["name"]}
+  end
+
+  defp instance_id(%{"spec" => %{"clusterInstanceRef" => %{}}} = resource) do
+    {:cluster, resource["spec"]["clusterInstanceRef"]["name"]}
   end
 end

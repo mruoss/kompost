@@ -24,6 +24,10 @@ defmodule Kompost.Kompo.Postgres.Operator do
         controller: Controller.InstanceController
       },
       %{
+        query: K8s.Client.watch("kompost.chuge.li/v1alpha1", "PostgresClusterInstance"),
+        controller: Controller.InstanceController
+      },
+      %{
         query:
           K8s.Client.watch("kompost.chuge.li/v1alpha1", "PostgresDatabase",
             namespace: watching_namespace
@@ -40,6 +44,12 @@ defmodule Kompost.Kompo.Postgres.Operator do
         group: "kompost.chuge.li",
         scope: :Namespaced,
         names: Bonny.API.CRD.kind_to_names("PostgresInstance", ["pginst"]),
+        versions: [V1Alpha1.PostgresInstance]
+      },
+      %Bonny.API.CRD{
+        group: "kompost.chuge.li",
+        scope: :Cluster,
+        names: Bonny.API.CRD.kind_to_names("PostgresClusterInstance", ["pgcinst"]),
         versions: [V1Alpha1.PostgresInstance]
       },
       %Bonny.API.CRD{

@@ -25,8 +25,6 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
               instanceRef:
                 type: object
                 properties:
-                  namespace:
-                    type: string
                   name:
                     type: string
               params:
