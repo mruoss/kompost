@@ -6,7 +6,7 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
   alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
-  @namespace "postgres-instance-controller-integration"
+  @namespace "pginst-controller-integration"
 
   @spec password_secret(name :: binary()) :: map()
   defp password_secret(name) do

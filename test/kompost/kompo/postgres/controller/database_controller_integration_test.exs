@@ -61,7 +61,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
     } do
       created_resource =
         resource_name
-        |> ResourceHelper.database(@namespace, instance)
+        |> ResourceHelper.database(@namespace, {:namespaced, instance})
         |> GlobalResourceHelper.k8s_apply!(conn)
 
       created_resource =
@@ -85,7 +85,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
         resource_name
         |> ResourceHelper.database(
           @namespace,
-          %{"metadata" => %{"namespace" => @namespace, "name" => "does-not-exist"}}
+          {:namespaced, %{"metadata" => %{"namespace" => @namespace, "name" => "does-not-exist"}}}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
 
@@ -110,7 +110,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
         resource_name
         |> ResourceHelper.database(
           @namespace,
-          instance
+          {:namespaced, instance}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
 
@@ -157,7 +157,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
         resource_name
         |> ResourceHelper.database(
           @namespace,
-          instance,
+          {:namespaced, instance},
           %{
             template: "template0",
             encoding: "SQL_ASCII",

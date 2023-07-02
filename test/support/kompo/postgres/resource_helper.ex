@@ -68,23 +68,33 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
   @spec database(
           name :: binary(),
           namespace :: binary(),
-          instance :: map(),
+          instance :: {:cluster | :namespaced, map()},
           params :: map(),
           opts :: Keyword.t()
         ) ::
           map()
   def database(name, namespace, instance, params \\ %{}, opts \\ []) do
-    ~y"""
-    apiVersion: kompost.chuge.li/v1alpha1
-    kind: PostgresDatabase
-    metadata:
-      name: #{name}
-      namespace: #{namespace}
-    spec:
-      instanceRef:
-        name: #{instance["metadata"]["name"]}
-    """
-    |> put_in(~w(spec params), params)
-    |> apply_opts(opts)
+    database =
+      ~y"""
+      apiVersion: kompost.chuge.li/v1alpha1
+      kind: PostgresDatabase
+      metadata:
+        name: #{name}
+        namespace: #{namespace}
+      """
+      |> Map.put("spec", %{"params" => params})
+      |> apply_opts(opts)
+
+    case instance do
+      {:cluster, cluster_instance} ->
+        put_in(database, ~w(spec clusterInstanceRef), %{
+          "name" => cluster_instance["metadata"]["name"]
+        })
+
+      {:namespaced, ns_instance} ->
+        put_in(database, ~w(spec instanceRef), %{
+          "name" => ns_instance["metadata"]["name"]
+        })
+    end
   end
 end

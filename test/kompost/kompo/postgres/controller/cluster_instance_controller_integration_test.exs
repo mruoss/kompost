@@ -4,7 +4,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
   alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
-  @namespace "postgres-cluster-instance-controller-integration"
+  @namespace "pgcinst-controller-integration"
 
   setup_all do
     timeout =
@@ -40,23 +40,111 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     [resource_name: "test-#{:rand.uniform(10000)}"]
   end
 
-  @tag :integration
-  @tag :postgres
-  @tag :wip
-  test "Credentials condition status is True if the plain password in resource", %{
-    conn: conn,
-    timeout: timeout,
-    resource_name: resource_name
-  } do
-    created_resource =
-      resource_name
-      |> ResourceHelper.cluster_instance()
-      |> GlobalResourceHelper.k8s_apply!(conn)
+  describe "Allowed Namespace Annotations" do
+    @tag :integration
+    @tag :postgres
+    test "Can be accessed by any namespace if no annotation set", %{
+      conn: conn,
+      timeout: timeout,
+      resource_name: resource_name
+    } do
+      created_instance =
+        resource_name
+        |> ResourceHelper.cluster_instance()
+        |> GlobalResourceHelper.k8s_apply!(conn)
 
-    created_resource =
-      GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
+      GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
 
-    conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-    assert "True" == conditions["Credentials"]["status"]
+      created_db =
+        resource_name
+        |> ResourceHelper.database(@namespace, {:cluster, created_instance})
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "InspectorUser", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "AppUser", timeout)
+    end
+
+    @tag :integration
+    @tag :postgres
+    test "Can be accessed if namespace is allowed literally", %{
+      conn: conn,
+      timeout: timeout,
+      resource_name: resource_name
+    } do
+      created_instance =
+        resource_name
+        |> ResourceHelper.cluster_instance(
+          annotations: %{"kompost.chuge.li/allowed_namespaces" => "#{@namespace}, other"}
+        )
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
+
+      created_db =
+        resource_name
+        |> ResourceHelper.database(@namespace, {:cluster, created_instance})
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "InspectorUser", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "AppUser", timeout)
+    end
+
+    @tag :integration
+    @tag :postgres
+    test "Can be accessed if namespace is allowed via regex", %{
+      conn: conn,
+      timeout: timeout,
+      resource_name: resource_name
+    } do
+      created_instance =
+        resource_name
+        |> ResourceHelper.cluster_instance(
+          annotations: %{"kompost.chuge.li/allowed_namespaces" => "pgcinst-[a-z\-]+, other"}
+        )
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
+
+      created_db =
+        resource_name
+        |> ResourceHelper.database(@namespace, {:cluster, created_instance})
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "InspectorUser", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_db, conn, "AppUser", timeout)
+    end
+
+    @tag :integration
+    @tag :postgres
+    test "Cannot be accessed if namespace is not allowed", %{
+      conn: conn,
+      timeout: timeout,
+      resource_name: resource_name
+    } do
+      created_instance =
+        resource_name
+        |> ResourceHelper.cluster_instance(
+          annotations: %{
+            "kompost.chuge.li/allowed_namespaces" =>
+              "pgcinst-controller, pgcinst-controller-integration-2"
+          }
+        )
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
+
+      created_db =
+        resource_name
+        |> ResourceHelper.database(@namespace, {:cluster, created_instance})
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      created_db = GlobalResourceHelper.wait_until_observed!(created_db, conn, timeout)
+
+      conditions = Map.new(created_db["status"]["conditions"], &{&1["type"], &1})
+      assert "False" == conditions["ClusterInstanceAccess"]["status"]
+
+      assert conditions["ClusterInstanceAccess"]["message"] =~
+               "The referenced PostgresClusterInstance cannot be accesed."
+    end
   end
 end

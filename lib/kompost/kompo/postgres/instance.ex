@@ -48,7 +48,7 @@ defmodule Kompost.Kompo.Postgres.Instance do
 
       DynamicSupervisor.start_child(ConnectionSupervisor, {Postgrex, args})
     else
-      {:lookup, [{conn, _}]} -> {:ok, conn}
+      {:lookup, [{conn, _, _}]} -> {:ok, conn}
       connection_error -> connection_error
     end
   end
@@ -57,8 +57,17 @@ defmodule Kompost.Kompo.Postgres.Instance do
   Checks in the `Kompost.Kompo.Postgres.ConnectionRegistry` for an existing
   connection defined by the given `id`.
   """
-  @spec lookup(id()) :: [{pid, any}]
-  def lookup(id), do: Registry.lookup(ConnectionRegistry, id)
+  @spec lookup(id()) :: [
+          {pid, conn_args :: keyword(),
+           allowed_namespaces :: NamespaceAccess.allowed_namespaces()}
+        ]
+  def lookup(id) do
+    Registry.lookup(ConnectionRegistry, id)
+    |> Enum.map(fn {pid, args} ->
+      {allowed_namespaces, conn_args} = Keyword.pop!(args, :allowed_namespaces)
+      {pid, conn_args, allowed_namespaces}
+    end)
+  end
 
   @doc """
   Checks if the user connected to the given `conn` has all the privileges
@@ -90,7 +99,7 @@ defmodule Kompost.Kompo.Postgres.Instance do
   @spec disconnect(id()) :: :ok
   def disconnect(id) do
     case lookup(id) do
-      [{conn, _}] ->
+      [{conn, _, _}] ->
         # This will also unregister the process at the ConnectionRegistry:
         DynamicSupervisor.terminate_child(ConnectionSupervisor, conn)
         :ok
