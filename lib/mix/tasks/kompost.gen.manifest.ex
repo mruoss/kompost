@@ -166,7 +166,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
         admissionReviewVersions: ["v1"]
         matchPolicy: Equivalent
         rules:
-          - operations: ['UPDATE']
+          - operations: ['CREATE', 'UPDATE']
             apiGroups: ['kompost.chuge.li']
             apiVersions: ['v1alpha1']
             resources: ['postgresdatabases']
