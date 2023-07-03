@@ -81,7 +81,11 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
        port: spec["port"],
        username: spec["username"],
        password: spec["plainPassword"],
-       database: "postgres"
+       database: "postgres",
+       ssl: spec["ssl"]["enabled"] || false,
+       ssl_opts: [
+         verify: (spec["ssl"]["enabled"] || "verify_none") |> String.to_atom()
+       ]
      ]}
   end
 

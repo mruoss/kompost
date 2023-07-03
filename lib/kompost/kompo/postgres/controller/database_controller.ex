@@ -170,7 +170,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     data =
       Map.merge(user_env, %{
         DB_HOST: Keyword.fetch!(conn_args, :hostname),
-        DB_PORT: "#{Keyword.fetch!(conn_args, :port)}"
+        DB_PORT: "#{Keyword.fetch!(conn_args, :port)}",
+        DB_SSL: "#{conn_args[:ssl]}",
+        DB_SSL_VERIFY: "#{conn_args[:ssl_opts][:verify] == :verify_peer}"
       })
 
     user_secret =

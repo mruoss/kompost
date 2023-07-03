@@ -39,8 +39,17 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresInstance do
                   key:
                     type: string
               plainPassword:
-                  type: string
-                  description: "It's not safe to save passwords in plaintext. Consider using passwordSecretRef instead."
+                type: string
+                description: "It's not safe to save passwords in plaintext. Consider using passwordSecretRef instead."
+              ssl:
+                type: object
+                properties:
+                  enabled:
+                    type: boolean
+                    description: "Set to true if ssl should be used."
+                  verify:
+                    type: string
+                    description: "'verify_none' or 'verify_peer'. Defaults to 'verify_none'"
       """a
     )
     |> add_observed_generation_status()

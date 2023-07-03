@@ -129,7 +129,9 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
           "DB_NAME" => database,
           "DB_PASS" => password,
           "DB_PORT" => port,
-          "DB_USER" => username
+          "DB_USER" => username,
+          "DB_SSL" => "false",
+          "DB_SSL_VERIFY" => "false"
         } = Map.new(data, fn {key, value} -> {key, Base.decode64!(value)} end)
 
         conn_args = [

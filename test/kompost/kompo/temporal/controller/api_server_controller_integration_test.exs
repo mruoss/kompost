@@ -72,11 +72,7 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
         |> ResourceHelper.api_server(@namespace)
         |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource =
-        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
-
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert "True" == conditions["Connected"]["status"]
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Connected", timeout)
     end
   end
 end
