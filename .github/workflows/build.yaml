@@ -15,10 +15,10 @@ env:
   KUBECONFIG: /home/runner/.kube/config
 
 jobs:
-  prepare_matrix:
+  build_matrix:
     runs-on: ubuntu-latest
     outputs:
-      matrix: ${{ steps.images.outputs.matrix }}
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
     steps:
       - uses: actions/checkout@v3
       - name: Parse .tool-versions
@@ -30,8 +30,8 @@ jobs:
 
             echo "$NAME=$VALUE" >> $GITHUB_OUTPUT
           done < .tool-versions
-      - name: Get Docker Images
-        id: images
+      - name: Build Matrix from hexpm Docker Image Tags
+        id: build-matrix
         run: |
           TOKEN=$(curl --request POST \
             --url https://registry.hub.docker.com/v2/users/login \
@@ -59,13 +59,13 @@ jobs:
           ELIXIR_DEBIAN=${{ steps.versions.outputs.elixir }}-erlang-${ERLANG_DEBIAN}
           ELIXIR_ALPINE=${{ steps.versions.outputs.elixir }}-erlang-${ERLANG_ALPINE}
 
-          echo "matrix={\"include\":[{\"erlang_image\":\"hexpm/erlang:${ERLANG_DEBIAN}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_DEBIAN}\",\"dest\":\"\",\"manifest\":\"manifest.yaml\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_SLIM}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_SLIM}\",\"dest\":\"-slim\",\"manifest\":\"manifest-slim.yaml\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_ALPINE}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_ALPINE}\",\"dest\":\"-alpine\",\"manifest\":\"manifest-alpine.yaml\"}]}" >> $GITHUB_OUTPUT
+          echo "matrix={\"include\":[{\"erlang_image\":\"hexpm/erlang:${ERLANG_DEBIAN}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_DEBIAN}\",\"dest\":\"\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_SLIM}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_SLIM}\",\"dest\":\"-slim\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_ALPINE}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_ALPINE}\",\"dest\":\"-alpine\"}]}" >> $GITHUB_OUTPUT
 
   build_container_image:
     runs-on: ubuntu-latest
-    needs: prepare_matrix
+    needs: build_matrix
     strategy:
-      matrix: ${{ fromJSON(needs.prepare_matrix.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
     permissions:
       packages: write
       contents: write
@@ -192,8 +192,8 @@ jobs:
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
           cache-to: type=inline
           build-args: |
-            ERLANG_IMAGE=${{ steps.prepare_vars.outputs.src_image_erlang }}
-            ELIXIR_IMAGE=${{ steps.prepare_vars.outputs.src_image_elixir }}
+            ERLANG_IMAGE=${{ matrix.erlang_image }}
+            ELIXIR_IMAGE=${{ matrix.elixir_image }}
 
       - uses: cloudposse/github-action-matrix-outputs-write@main
         id: out
@@ -244,9 +244,9 @@ jobs:
 
   upload_manifests:
     runs-on: ubuntu-latest
-    needs: [prepare_matrix, read_matrix_output, create_gh_release]
+    needs: [build_matrix, read_matrix_output, create_gh_release]
     strategy:
-      matrix: ${{ fromJSON(needs.prepare_matrix.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
     steps:
       - uses: actions/checkout@v3
 
