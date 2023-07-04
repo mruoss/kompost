@@ -40,6 +40,28 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     [resource_name: "test-#{:rand.uniform(10000)}"]
   end
 
+  describe "Secret Reference" do
+    @tag :integration
+    @tag :postgres
+    test "Reads Secret from operator namespace", %{
+      conn: conn,
+      timeout: timeout,
+      resource_name: resource_name
+    } do
+      GlobalResourceHelper.k8s_apply!(
+        ResourceHelper.password_secret(resource_name, "kompost"),
+        conn
+      )
+
+      created_instance =
+        resource_name
+        |> ResourceHelper.cluster_instance_with_secret_ref()
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
+    end
+  end
+
   describe "Allowed Namespace Annotations" do
     @tag :integration
     @tag :postgres
@@ -50,7 +72,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     } do
       created_instance =
         resource_name
-        |> ResourceHelper.cluster_instance()
+        |> ResourceHelper.cluster_instance_with_plain_pw()
         |> GlobalResourceHelper.k8s_apply!(conn)
 
       GlobalResourceHelper.wait_for_condition!(created_instance, conn, "Privileged", timeout)
@@ -73,7 +95,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     } do
       created_instance =
         resource_name
-        |> ResourceHelper.cluster_instance(
+        |> ResourceHelper.cluster_instance_with_plain_pw(
+          System.fetch_env!("POSTGRES_PASSWORD"),
           annotations: %{"kompost.chuge.li/allowed_namespaces" => "#{@namespace}, other"}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
@@ -98,7 +121,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     } do
       created_instance =
         resource_name
-        |> ResourceHelper.cluster_instance(
+        |> ResourceHelper.cluster_instance_with_plain_pw(
+          System.fetch_env!("POSTGRES_PASSWORD"),
           annotations: %{"kompost.chuge.li/allowed_namespaces" => "pgcinst-[a-z\-]+, other"}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
@@ -123,7 +147,8 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
     } do
       created_instance =
         resource_name
-        |> ResourceHelper.cluster_instance(
+        |> ResourceHelper.cluster_instance_with_plain_pw(
+          System.fetch_env!("POSTGRES_PASSWORD"),
           annotations: %{
             "kompost.chuge.li/allowed_namespaces" =>
               "pgcinst-controller, pgcinst-controller-integration-2"
