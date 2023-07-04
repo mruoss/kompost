@@ -169,7 +169,10 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
           - operations: ['CREATE', 'UPDATE']
             apiGroups: ['kompost.chuge.li']
             apiVersions: ['v1alpha1']
-            resources: ['postgresdatabases']
+            resources:
+              - postgresdatabases
+              - postgresclusterinstances
+              - postgresinstances
         failurePolicy: 'Ignore' # Fail-open (optional)
         sideEffects: None
         clientConfig:

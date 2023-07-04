@@ -34,7 +34,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
          {:conn, axn, {:ok, conn}} <-
            {:conn, axn, Instance.connect(id, connection_args, allowed_ns)},
          axn <- set_condition(axn, "Connected", true, "Connection to database was established"),
-         {:privileges, :ok} <- {:privileges, Instance.check_privileges(conn)},
+         {:privileges, axn, :ok} <- {:privileges, axn, Instance.check_privileges(conn)},
          axn <-
            set_condition(axn, "Privileged", true, "The conneted user has the required privileges") do
       success_event(axn)
@@ -54,7 +54,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
         |> failure_event(message: message)
         |> set_condition("Connected", false, message)
 
-      {:privileges, {:error, message}} ->
+      {:privileges, axn, {:error, message}} ->
         Logger.warning("#{axn.action} failed. #{message}")
 
         axn
@@ -75,6 +75,17 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
   @spec get_connection_args(map(), K8s.Conn.t()) ::
           {:ok, [Postgrex.start_option()]} | {:error, K8s.Client.Runner.Base.error_t()}
   defp get_connection_args(%{"spec" => %{"plainPassword" => _} = spec}, _conn) do
+    cacerts =
+      case spec["ssl"]["ca"] do
+        nil ->
+          :public_key.cacerts_get()
+
+        cacert ->
+          cacert
+          |> :public_key.pem_decode()
+          |> Enum.map(fn {_, der, _} -> der end)
+      end
+
     {:ok,
      [
        hostname: spec["hostname"],
@@ -84,7 +95,9 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
        database: "postgres",
        ssl: spec["ssl"]["enabled"] || false,
        ssl_opts: [
-         verify: (spec["ssl"]["enabled"] || "verify_none") |> String.to_atom()
+         verify: (spec["ssl"]["verify"] || "verify_none") |> String.to_atom(),
+         cacerts: cacerts,
+         server_name_indication: String.to_charlist(spec["hostname"])
        ]
      ]}
   end

@@ -50,6 +50,9 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresInstance do
                   verify:
                     type: string
                     description: "'verify_none' or 'verify_peer'. Defaults to 'verify_none'"
+                  ca:
+                    type: string
+                    description: "CA certificates used to validate the server cert against."
       """a
     )
     |> add_observed_generation_status()

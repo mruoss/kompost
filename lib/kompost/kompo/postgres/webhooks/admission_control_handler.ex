@@ -24,7 +24,12 @@ defmodule Kompost.Kompo.Postgres.Webhooks.AdmissionControlHandler do
       NamespaceAccess.allowed_namespaces!(conn.request["object"])
 
       conn
-      |> check_allowed_values(~w(spec ssl verify), ~w(verify_none verify_peer), ".spec.verify")
+      |> check_allowed_values(
+        ~w(spec ssl verify),
+        ~w(verify_none verify_peer),
+        ".spec.ssl.verify"
+      )
+      |> check_certificate()
     catch
       %Regex.CompileError{} = error ->
         deny(
@@ -37,13 +42,33 @@ defmodule Kompost.Kompo.Postgres.Webhooks.AdmissionControlHandler do
   validate "kompost.chuge.li/v1alpha1/postgresinstances", conn do
     try do
       NamespaceAccess.allowed_namespaces!(conn.request["object"])
+
       conn
+      |> check_allowed_values(~w(spec ssl verify), ~w(verify_none verify_peer), ".spec.verify")
+      |> check_certificate()
     catch
       %Regex.CompileError{} = error ->
         deny(
           conn,
           ~s(Invalid regular expression in the annotation "kompost.chuge.li/allowed_namespaces": #{Exception.message(error)})
         )
+    end
+  end
+
+  @spec check_certificate(K8sWebhoox.Conn.t()) :: K8sWebhoox.Conn.t()
+  defp check_certificate(conn) do
+    case conn.request["object"]["spec"]["ssl"]["ca"] do
+      nil ->
+        conn
+
+      cacert ->
+        cacert
+        |> :public_key.pem_decode()
+        |> Enum.map(fn {_, der, _} -> der end)
+        |> then(fn
+          [] -> deny(conn, "The CA certificate you passed in .spec.ssl.ca cannot be parsed.")
+          _ -> conn
+        end)
     end
   end
 end
