@@ -2,23 +2,24 @@
 
 The Postgres Kompo manages databases inside your Postgres servers.
 
-## Example
+In order to use it, you need a running Postgres server and the information about
+how to connect to it using a superadmin account. You then declare databases to
+be created on that server by this operator.
 
-After installing Kompost, you need to tell it where to find your PostgreSQL
-instance. You do this by applying a resource of kind `PostgresInstance` to
-your cluster:
+## How it Works
 
-```yaml
-apiVersion: kompost.chuge.li/v1alpha1
-kind: PostgresInstance
-metadata:
-  name: app-database
-  namespace: awesome-application
-spec:
-  hostname: postgres.svc
-  port: 5432
-  username: postgres
-  passwordSecretRef:
-    name: app-database-password
-    key: DB_PASS
-```
+The Postgres Kompo comes with [`PostgresInstance`](postgres_instance.md) and
+[`PostgresClusterInstance`](postgres_cluster_instance.md) CRDs which serve as
+connectors to your Postgres server.
+
+The `PostgresDatabase` CRD defines a database to be created inside the instance
+referenced by `.spec.instanceRef` or `.spec.clusterInstanceRef` respectively.
+
+The operator uses the information from the instance resource to connect to
+the server in order to create the requested database.
+
+## Reconciliation
+
+In case the state in the target (the Postgres server) diverges, Kompost tries to
+reconcile it. E.g. if a database gets deleted on the cluster, Kompost recreates
+it. However, Kompost does not backup and restore schemas and/or data.

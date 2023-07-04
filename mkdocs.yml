@@ -16,6 +16,9 @@ nav:
     - Getting Started: getting_started.md
   - Postgres:
     - Introduction: postgres/index.md
+    - PostgresInstance: postgres/postgres_instance.md
+    - PostgresClusterInstance: postgres/postgres_cluster_instance.md
+    - PostgresDatabase: postgres/postgres_database.md
 theme:
   name: material
   palette:    
@@ -62,8 +65,6 @@ theme:
 plugins:
   - search:
       separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
-  - minify:
-      minify_html: true
 
 # Customization
 extra:
