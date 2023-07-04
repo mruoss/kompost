@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Postgres` Kompo - Support for SSL connections [#27](https://github.com/mruoss/kompost/pull/27)
 - `PostgresClusterInstance` - Cluster scoped instance accessible by databases in any or a defined set of namespaces. [#25](https://github.com/mruoss/kompost/pull/25)
 
 ## [0.2.3] - 2023-06-30
