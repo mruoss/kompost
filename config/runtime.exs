@@ -1,5 +1,8 @@
 import Config
 
+config :kompost,
+  operator_namespace: System.get_env("BONNY_POD_NAMESPACE", "kompost")
+
 config :kompost, Kompost.Kompo,
   postgres: System.get_env("KOMPO_POSTGRES_ENABLED", "true") in ["true", "1"],
   temporal: System.get_env("KOMPO_TEMPORAL_ENABLED", "true") in ["true", "1"]

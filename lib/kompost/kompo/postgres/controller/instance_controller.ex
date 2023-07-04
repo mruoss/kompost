@@ -87,14 +87,15 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceController do
 
   defp get_connection_args(instance, conn) do
     %{
-      "metadata" => %{"namespace" => namespace},
-      "spec" => %{"passwordSecretRef" => %{"name" => secret_name, "key" => key} = secret_ref}
+      "spec" => %{"passwordSecretRef" => %{"name" => secret_name, "key" => key}}
     } = instance
 
     with {:ok, secret} <-
            K8s.Client.get("v1", "Secret",
              name: secret_name,
-             namespace: secret_ref["namespace"] || namespace
+             namespace:
+               instance["metadata"]["namespace"] ||
+                 Application.fetch_env!(:kompost, :operator_namespace)
            )
            |> K8s.Client.put_conn(conn)
            |> K8s.Client.run() do

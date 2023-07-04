@@ -1,25 +1,10 @@
 defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegrationTest do
   use ExUnit.Case, async: true
 
-  import YamlElixir.Sigil
-
   alias Kompost.Test.GlobalResourceHelper
   alias Kompost.Test.Kompo.Postgres.ResourceHelper
 
   @namespace "pginst-controller-integration"
-
-  @spec password_secret(name :: binary()) :: map()
-  defp password_secret(name) do
-    ~y"""
-    apiVersion: v1
-    kind: Secret
-    metadata:
-      name: #{name}
-      namespace: #{@namespace}
-    stringData:
-      password: password
-    """
-  end
 
   setup_all do
     timeout =
@@ -84,7 +69,10 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(
+        ResourceHelper.password_secret(resource_name, @namespace),
+        conn
+      )
 
       created_resource =
         resource_name
@@ -126,18 +114,17 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(
+        ResourceHelper.password_secret(resource_name, @namespace),
+        conn
+      )
 
       created_resource =
         resource_name
         |> ResourceHelper.instance_with_secret_ref(@namespace)
         |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource =
-        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
-
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert "True" == conditions["Connected"]["status"]
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Connected", timeout)
     end
 
     @tag :integration
@@ -168,7 +155,10 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
       timeout: timeout,
       resource_name: resource_name
     } do
-      GlobalResourceHelper.k8s_apply!(password_secret(resource_name), conn)
+      GlobalResourceHelper.k8s_apply!(
+        ResourceHelper.password_secret(resource_name, @namespace),
+        conn
+      )
 
       created_resource =
         resource_name

@@ -5,7 +5,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
   import YamlElixir.Sigil
 
   @spec cluster_instance(name :: binary(), opts :: Keyword.t()) :: map()
-  def cluster_instance(name, opts \\ []) do
+  defp cluster_instance(name, opts) do
     ~y"""
     apiVersion: kompost.chuge.li/v1alpha1
     kind: PostgresClusterInstance
@@ -15,9 +15,34 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
       hostname: #{System.get_env("POSTGRES_HOST", "127.0.0.1")}
       port: #{System.fetch_env!("POSTGRES_EXPOSED_PORT")}
       username: #{System.fetch_env!("POSTGRES_USER")}
-      plainPassword: #{System.fetch_env!("POSTGRES_PASSWORD")}
     """
     |> apply_opts(opts)
+  end
+
+  @spec cluster_instance_with_secret_ref(name :: binary(), opts :: Keyword.t()) :: map()
+  def cluster_instance_with_secret_ref(name, opts \\ []) do
+    name
+    |> cluster_instance(opts)
+    |> put_in(~w(spec passwordSecretRef), %{
+      "name" => name,
+      "key" => "password"
+    })
+  end
+
+  @spec cluster_instance_with_plain_pw(
+          name :: binary(),
+          password :: binary(),
+          opts :: Keyword.t()
+        ) ::
+          map()
+  def cluster_instance_with_plain_pw(
+        name,
+        password \\ System.fetch_env!("POSTGRES_PASSWORD"),
+        opts \\ []
+      ) do
+    name
+    |> cluster_instance(opts)
+    |> put_in(~w(spec plainPassword), password)
   end
 
   @spec instance(name :: binary(), namespace :: binary(), opts :: Keyword.t()) :: map()
@@ -43,7 +68,7 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
     |> instance(namespace, opts)
     |> put_in(~w(spec passwordSecretRef), %{
       "name" => name,
-      "key" => System.fetch_env!("POSTGRES_PASSWORD")
+      "key" => "password"
     })
   end
 
@@ -96,5 +121,18 @@ defmodule Kompost.Test.Kompo.Postgres.ResourceHelper do
           "name" => ns_instance["metadata"]["name"]
         })
     end
+  end
+
+  @spec password_secret(name :: binary(), namespace :: binary()) :: map()
+  def password_secret(name, namespace) do
+    ~y"""
+    apiVersion: v1
+    kind: Secret
+    metadata:
+      name: #{name}
+      namespace: #{namespace}
+    stringData:
+      password: #{System.fetch_env!("POSTGRES_PASSWORD")}
+    """
   end
 end
