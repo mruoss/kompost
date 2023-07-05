@@ -21,7 +21,7 @@ The `PostgresClusterInstance` then references the secret in `spec.passwordSecret
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresClusterInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -32,4 +32,20 @@ spec:
     key: password
   ssl:
     enabled: false
+```
+
+## Referencing Cluster Intances
+
+When declaring the `PostgresDatabase` resource, use the field `.spec.clusterInstanceRef`
+to reference a cluster instance:
+
+```yaml
+apiVersion: kompost.chuge.li/v1alpha1
+kind: PostgresDatabase
+metadata:
+  name: staging-server
+  namespace: default
+spec:
+  clusterInstanceRef:
+    name: app-database
 ```

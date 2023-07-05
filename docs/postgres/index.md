@@ -12,7 +12,7 @@ The Postgres Kompo comes with [`PostgresInstance`](postgres_instance.md) and
 [`PostgresClusterInstance`](postgres_cluster_instance.md) CRDs which serve as
 connectors to your Postgres server.
 
-The `PostgresDatabase` CRD defines a database to be created inside the instance
+The [`PostgresDatabase`](postgres_database.md) CRD defines a database to be created inside the instance
 referenced by `.spec.instanceRef` or `.spec.clusterInstanceRef` respectively.
 
 The operator uses the information from the instance resource to connect to

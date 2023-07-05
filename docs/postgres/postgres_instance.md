@@ -14,7 +14,7 @@ resource.
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -33,7 +33,7 @@ In order to connect via SSL, you can set `spec.ssl.enabled` to `true`.
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -56,7 +56,7 @@ a publicly trusted CA.
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -99,7 +99,10 @@ spec:
 ### The Password Secret
 
 On production environments the password used to connect to the server should be
-stored in a secret which is then referenced inside the instance resource:
+stored in a secret which is then referenced inside the instance resource. For
+`PostgresInstance` resources, the secret must reside in the same namespace as
+the instance resource. For `PostgresClusterInstance` resources, the secret must
+reside in the namespace the operator (default: "kompost") runs.
 
 ```yaml
 apiVersion: v1
@@ -118,7 +121,7 @@ inside the secret holding the password.
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -143,7 +146,7 @@ instance resource:
 apiVersion: kompost.chuge.li/v1alpha1
 kind: PostgresInstance
 metadata:
-  name: app-database
+  name: staging-server
   namespace: default
 spec:
   hostname: postgres.svc
@@ -155,11 +158,11 @@ spec:
 ## Checking the Status of the Resource
 
 In order to check the resource's status, use `kubectl describe` and look out for
-the list of conditions in `status.conditions`. If all the `Status` fields are
-`True`, you're good to go.
+the list of conditions in `status.conditions` and the list of events. If all the
+`Status` fields are `True`, you're good to go.
 
 ```sh
-$ kubectl describe pginst app-database
+$ kubectl describe pginst staging-server
 
 [...]
 Status:
