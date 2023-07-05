@@ -41,3 +41,7 @@ delete:
 	rm -f test/integration/kubeconfig-test.yaml
 	kind delete cluster --name kompost-dev
 	rm -f test/integration/kubeconfig-dev.yaml
+
+.PHONY: docs
+docs:
+	docker run --name kompost-docs --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material

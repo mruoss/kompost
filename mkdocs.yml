@@ -1,0 +1,115 @@
+# Project information
+site_name: Kompost
+site_url: https://kompost.github.io
+site_author: Michael Ruoss
+
+# Repository
+repo_name: mruoss/kompost
+repo_url: https://github.com/mruoss/kompost
+
+# Copyright
+copyright: Copyright &copy; 2023 Michael Ruoss
+
+nav:
+  - Kompost:
+    - Introduction: index.md
+    - Getting Started: getting_started.md
+  - Postgres:
+    - Introduction: postgres/index.md
+    - PostgresInstance: postgres/postgres_instance.md
+    - PostgresClusterInstance: postgres/postgres_cluster_instance.md
+    - PostgresDatabase: postgres/postgres_database.md
+theme:
+  name: material
+  palette:    
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - announce.dismiss
+    - content.action.edit
+    # - content.action.view
+    - content.code.annotate
+    - content.code.copy
+    # - content.tabs.link
+    - content.tooltips
+    # - header.autohide
+    - navigation.expand
+    - navigation.footer
+    - navigation.indexes
+    - navigation.sections
+    - navigation.tabs
+    # - navigation.tabs.sticky
+    - navigation.top
+    - navigation.tracking
+    - search.highlight
+    - search.share
+    - search.suggest
+    - toc.follow
+
+# Plugins
+plugins:
+  - search:
+      separator: '[\s\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+
+# Customization
+extra:
+  annotate:
+    json: [.s2]
+  # analytics:
+  #   provider: google
+  #   property: !ENV GOOGLE_ANALYTICS_KEY
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mruoss
+    - icon: fontawesome/regular/heart
+      link: https://github.com/sponsors/mruoss
+    - icon: fontawesome/brands/mastodon
+      link: https://tooting.ch/@mruoss
+    - icon: fontawesome/brands/twitter
+      link: https://twitter.com/miruoss
+markdown_extensions:
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:materialx.emoji.to_svg
+      emoji_index: !!python/name:materialx.emoji.twemoji
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.keys
+  - pymdownx.mark
+  # - pymdownx.smartsymbols
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde

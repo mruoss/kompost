@@ -28,3 +28,5 @@ kompost-*.tar
 /test/integration/kubeconfig*.yaml
 
 /manifest*.yaml
+
+/site
