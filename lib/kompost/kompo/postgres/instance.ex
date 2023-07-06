@@ -7,6 +7,7 @@ defmodule Kompost.Kompo.Postgres.Instance do
 
   alias Kompost.Kompo.Postgres.ConnectionRegistry
   alias Kompost.Kompo.Postgres.ConnectionSupervisor
+  alias Kompost.Kompo.Postgres.Privileges
 
   alias Kompost.Tools.NamespaceAccess
 
@@ -75,20 +76,8 @@ defmodule Kompost.Kompo.Postgres.Instance do
   """
   @spec check_privileges(conn :: Postgrex.conn()) :: :ok | {:error, binary()}
   def check_privileges(conn) do
-    case Postgrex.query(
-           conn,
-           "select rolcreaterole,rolcreatedb from pg_authid where rolname = CURRENT_USER",
-           []
-         ) do
-      {:ok, result} ->
-        case result.rows do
-          [[true, true]] -> :ok
-          [[false, _]] -> {:error, "The user does not have the CREATEROLE privilege."}
-          [[_, false]] -> {:error, "The user does not have the CREATEDB privilege."}
-        end
-
-      _ ->
-        {:error, "Unable to query the current user's privileges."}
+    with :ok <- Privileges.check_create_role_privilege(conn) do
+      Privileges.check_create_database_privilege(conn)
     end
   end
 

@@ -150,7 +150,7 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
   describe "privileges" do
     @tag :integration
     @tag :postgres
-    test "Privileged condition status is true if user is superuser", %{
+    test "Privileged condition status is true if user has privileges", %{
       conn: conn,
       timeout: timeout,
       resource_name: resource_name
@@ -165,11 +165,7 @@ defmodule Kompost.Kompo.Postgres.Controller.ClusterInstanceControllerIntegration
         |> ResourceHelper.instance_with_secret_ref(@namespace)
         |> GlobalResourceHelper.k8s_apply!(conn)
 
-      created_resource =
-        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
-
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert "True" == conditions["Privileged"]["status"]
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Privileged", timeout)
     end
   end
 end

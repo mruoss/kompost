@@ -179,4 +179,55 @@ defmodule Kompost.Kompo.Postgres.Privileges do
   @spec process_trx_result({:ok, :ok} | term()) :: :ok | term()
   defp process_trx_result({:ok, :ok}), do: :ok
   defp process_trx_result({:error, error}), do: error
+
+  @doc """
+  Checks if the current user has the privilege to create roles on the server
+  """
+  @dialyzer {:no_return, {:check_create_role_privilege, 1}}
+  @spec check_create_role_privilege(Postgrex.conn()) :: :ok | {:error, binary()}
+  def check_create_role_privilege(conn) do
+    Postgrex.transaction(conn, fn conn ->
+      result =
+        Postgrex.query(
+          conn,
+          ~s/CREATE ROLE Ie3Ohngi WITH PASSWORD 'password' NOCREATEDB NOCREATEROLE NOINHERIT LOGIN/,
+          []
+        )
+
+      case result do
+        {:ok, _} ->
+          DBConnection.rollback(conn, :ok)
+
+        {:error, exception} when is_exception(exception) ->
+          DBConnection.rollback(
+            conn,
+            {:error,
+             "The user does not have the privilege to create users: " <>
+               Exception.message(exception)}
+          )
+      end
+    end)
+    |> process_trx_result
+  end
+
+  @doc """
+  Checks if the current user has the privilege to create databases on the server
+  """
+  @spec check_create_database_privilege(Postgrex.conn()) :: :ok | {:error, binary()}
+  def check_create_database_privilege(conn) do
+    result = Postgrex.query(conn, ~s/SELECT has_database_privilege('postgres', 'CREATE')/, [])
+
+    case result do
+      {:ok, %Postgrex.Result{rows: [[true]]}} ->
+        :ok
+
+      {:ok, %Postgrex.Result{rows: [[false]]}} ->
+        {:error, "The user does not have the privilege to create databases"}
+
+      {:error, exception} when is_exception(exception) ->
+        message = "Failed to check user privileges: #{Exception.message(exception)}"
+        Logger.error(message)
+        {:error, message}
+    end
+  end
 end
