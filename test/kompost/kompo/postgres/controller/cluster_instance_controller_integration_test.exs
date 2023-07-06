@@ -97,7 +97,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         resource_name
         |> ResourceHelper.cluster_instance_with_plain_pw(
           System.fetch_env!("POSTGRES_PASSWORD"),
-          annotations: %{"kompost.chuge.li/allowed_namespaces" => "#{@namespace}, other"}
+          annotations: %{"kompost.chuge.li/allowed-namespaces" => "#{@namespace}, other"}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
 
@@ -123,7 +123,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         resource_name
         |> ResourceHelper.cluster_instance_with_plain_pw(
           System.fetch_env!("POSTGRES_PASSWORD"),
-          annotations: %{"kompost.chuge.li/allowed_namespaces" => "pgcinst-[a-z\-]+, other"}
+          annotations: %{"kompost.chuge.li/allowed-namespaces" => "pgcinst-[a-z\-]+, other"}
         )
         |> GlobalResourceHelper.k8s_apply!(conn)
 
@@ -150,7 +150,7 @@ defmodule Kompost.Kompo.Postgres.Controller.InstanceControllerIntegrationTest do
         |> ResourceHelper.cluster_instance_with_plain_pw(
           System.fetch_env!("POSTGRES_PASSWORD"),
           annotations: %{
-            "kompost.chuge.li/allowed_namespaces" =>
+            "kompost.chuge.li/allowed-namespaces" =>
               "pgcinst-controller, pgcinst-controller-integration-2"
           }
         )
