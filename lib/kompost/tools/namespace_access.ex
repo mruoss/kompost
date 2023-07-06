@@ -3,7 +3,7 @@ defmodule Kompost.Tools.NamespaceAccess do
   Module handling access to resources across namespaces.
   """
 
-  @allowed_namespaces_annotation "kompost.chuge.li/allowed_namespaces"
+  @allowed_namespaces_annotation "kompost.chuge.li/allowed-namespaces"
 
   @type allowed_namespaces :: list(Regex.t())
 
@@ -13,12 +13,12 @@ defmodule Kompost.Tools.NamespaceAccess do
   ### Examples
 
       iex> nil
-      ...> |> then(&(%{"metadata" => %{"annotations" => %{"kompost.chuge.li/allowed_namespaces" => &1}}}))
+      ...> |> then(&(%{"metadata" => %{"annotations" => %{"kompost.chuge.li/allowed-namespaces" => &1}}}))
       ...> |> Kompost.Tools.NamespaceAccess.allowed_namespaces!()
       [~r//]
 
       iex> "default, prefix-[a-z]{3}, ^.*-suffix$"
-      ...> |> then(&(%{"metadata" => %{"annotations" => %{"kompost.chuge.li/allowed_namespaces" => &1}}}))
+      ...> |> then(&(%{"metadata" => %{"annotations" => %{"kompost.chuge.li/allowed-namespaces" => &1}}}))
       ...> |> Kompost.Tools.NamespaceAccess.allowed_namespaces!()
       [~r/^default$/, ~r/^prefix-[a-z]{3}$/, ~r/^.*-suffix$/]
   """

@@ -34,7 +34,7 @@ defmodule Kompost.Kompo.Postgres.Webhooks.AdmissionControlHandler do
       %Regex.CompileError{} = error ->
         deny(
           conn,
-          ~s(Invalid regular expression in the annotation "kompost.chuge.li/allowed_namespaces": #{Exception.message(error)})
+          ~s(Invalid regular expression in the annotation "kompost.chuge.li/allowed-namespaces": #{Exception.message(error)})
         )
     end
   end
@@ -50,7 +50,7 @@ defmodule Kompost.Kompo.Postgres.Webhooks.AdmissionControlHandler do
       %Regex.CompileError{} = error ->
         deny(
           conn,
-          ~s(Invalid regular expression in the annotation "kompost.chuge.li/allowed_namespaces": #{Exception.message(error)})
+          ~s(Invalid regular expression in the annotation "kompost.chuge.li/allowed-namespaces": #{Exception.message(error)})
         )
     end
   end

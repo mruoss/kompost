@@ -96,7 +96,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
       {:can_access, axn, false} ->
         message =
-          ~s(The referenced PostgresClusterInstance cannot be accesed. Check the annotation "kompost.chuge.li/allowed_namespaces" on the PostgresClusterInstance.)
+          ~s(The referenced PostgresClusterInstance cannot be accesed. Check the annotation "kompost.chuge.li/allowed-namespaces" on the PostgresClusterInstance.)
 
         Logger.warning("#{axn.action} failed. #{message}")
 
