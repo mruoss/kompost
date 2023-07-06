@@ -90,7 +90,7 @@ spec:
     key: password
 ```
 
-## Referencing Cluster Intances
+## Referencing Cluster Intances
 
 When declaring the `PostgresDatabase` resource, use the field `.spec.clusterInstanceRef`
 to reference a cluster instance:
