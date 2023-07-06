@@ -42,12 +42,12 @@ By default, the `PostgresClusterInstance` can be referenced by
 of namespaces throug the `kompost.chuge.li/allowed-namespaces` annotation. This
 annotation can be set to a list of namespaces as regular expressions.
 
-!!! note Start and End Anchors are added if not present
+!!! note Start and End Anchors are added automatically 
 
     Note that Kompost wraps all regular expressions in `$` and `^` anchors if
     they aren't already.
 
-### Examples
+### Examples
 
 The following resource can be referenced by `PostgresDatabase` resources in
 exactly two namespaces: `default` and `staging`.
