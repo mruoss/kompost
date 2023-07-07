@@ -175,9 +175,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
       created_resource =
         GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
 
-      conditions = Map.new(created_resource["status"]["conditions"], &{&1["type"], &1})
-      assert %{"status" => "True"} = conditions["Connection"]
-      assert %{"status" => "True"} = conditions["Database"]
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Connection", timeout)
+      GlobalResourceHelper.wait_for_condition!(created_resource, conn, "Database", timeout)
 
       conn_args = [
         hostname: "127.0.0.1",
@@ -205,6 +204,85 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseControllerIntegrationTest do
                  """,
                  [created_resource["status"]["sql_db_name"]]
                )
+    end
+
+    @tag :integration
+    @tag :postgres
+    test "Database and users are created and removed on the server", %{
+      conn: conn,
+      resource_name: resource_name,
+      instance: instance,
+      timeout: timeout
+    } do
+      created_resource =
+        resource_name
+        |> ResourceHelper.database(
+          @namespace,
+          {:namespaced, instance}
+        )
+        |> GlobalResourceHelper.k8s_apply!(conn)
+
+      created_resource =
+        GlobalResourceHelper.wait_until_observed!(created_resource, conn, timeout)
+
+      conn_args = [
+        hostname: "127.0.0.1",
+        port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
+        username: System.fetch_env!("POSTGRES_USER"),
+        password: System.fetch_env!("POSTGRES_PASSWORD"),
+        database: "postgres"
+      ]
+
+      db_conn = start_link_supervised!({Postgrex, conn_args}, id: "root")
+
+      result =
+        Postgrex.query!(
+          db_conn,
+          ~s/SELECT datname FROM pg_catalog.pg_database WHERE datname = $1;/,
+          [created_resource["status"]["sql_db_name"]]
+        )
+
+      assert 1 == result.num_rows
+
+      created_resource["status"]["users"]
+      |> Enum.each(fn user ->
+        result =
+          Postgrex.query!(
+            db_conn,
+            ~s/SELECT 1 FROM pg_roles WHERE rolname=$1;/,
+            [user["username"]]
+          )
+
+        assert 1 == result.num_rows
+      end)
+
+      ### Removing Database ###
+
+      {:ok, _} =
+        K8s.Client.delete(created_resource)
+        |> K8s.Client.put_conn(conn)
+        |> K8s.Client.wait_until(timeout: timeout)
+
+      created_resource["status"]["users"]
+      |> Enum.each(fn user ->
+        result =
+          Postgrex.query!(
+            db_conn,
+            ~s/SELECT 1 FROM pg_roles WHERE rolname=$1;/,
+            [user["username"]]
+          )
+
+        assert 0 == result.num_rows
+      end)
+
+      result =
+        Postgrex.query!(
+          db_conn,
+          ~s/SELECT datname FROM pg_catalog.pg_database WHERE datname = $1;/,
+          [created_resource["status"]["sql_db_name"]]
+        )
+
+      assert 0 == result.num_rows
     end
   end
 end
