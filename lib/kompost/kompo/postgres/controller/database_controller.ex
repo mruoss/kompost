@@ -37,7 +37,7 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource = axn.resource
     namespace = resource["metadata"]["namespace"]
     db_name = Database.name(resource)
-    db_params = Params.new!(resource["spec"]["params"])
+    db_params = Params.new!(resource["spec"]["params"] || %{})
     instance = resource |> instance_id() |> Instance.lookup()
 
     with {:instance, [{conn, conn_args, allowed_namespaces}]} <- {:instance, instance},
