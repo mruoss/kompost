@@ -6,7 +6,7 @@ site_author: Michael Ruoss
 # Repository
 repo_name: mruoss/kompost
 repo_url: https://github.com/mruoss/kompost
-edit_uri: blob/main/docs/
+edit_uri: edit/main/docs/
 
 # Copyright
 copyright: Copyright &copy; 2023 Michael Ruoss
