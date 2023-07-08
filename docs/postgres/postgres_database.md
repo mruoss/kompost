@@ -47,7 +47,7 @@ kubectl get pgdb -n default some-database -o jsonpath="{.status.users}" |jq
 ]
 ```
 
-The generated secrets then look something like this:
+The generated secrets hold all the information your apps require to connect to the database. They look something like this:
 
 ```yaml
 apiVersion: v1
