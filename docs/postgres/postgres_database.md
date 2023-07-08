@@ -94,6 +94,10 @@ parameters](https://www.postgresql.org/docs/current/sql-createdatabase.html)
 when creating a database. Some of these parameters are supported by Kompost and
 can be passed in `spec.params`.
 
+!!! note Creation params cannot be changed 
+
+    These parameters are only used when the database is created. Kompost therefore denies request to change them on an existing resource.
+
 The currently supported parameters are:
 
 - `template`
