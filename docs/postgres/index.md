@@ -3,8 +3,8 @@
 The Postgres Kompo manages databases inside your Postgres servers.
 
 In order to use it, you need a running Postgres server and the information about
-how to connect to it using a superadmin account. You then declare databases to
-be created on that server by this operator.
+how to connect to it using an account with privileges to manage databases and users. You then declare databases to
+be created on that server using this operator.
 
 ## How it Works
 
