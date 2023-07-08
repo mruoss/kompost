@@ -71,7 +71,7 @@ data:
 When using Kompost on a live environment, you might want to protect the
 underlying resources (i.e. the databases, users, etc.) from accidental deletion
 if the Kubernetes resource gets deleted. That's the purpose of the
-`kompost.chuge.li/deletion-policy` annotation. Being set to `abandon`, it prevents
+`kompost.chuge.li/deletion-policy` annotation. When set to `abandon`, it prevents
 Kompost form adding the finalizers to your resource.
 
 ```yaml
