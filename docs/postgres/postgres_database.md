@@ -21,7 +21,7 @@ spec:
     name: staging-server
 ```
 
-## Connection Details
+## Connection Details
 
 Once applied to the cluster, Kompost creates a database and **two users**. One
 is called `inspector` having read-only access to the database, a second is one
