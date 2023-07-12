@@ -71,9 +71,9 @@ plugins:
 extra:
   annotate:
     json: [.s2]
-  # analytics:
-  #   provider: google
-  #   property: !ENV GOOGLE_ANALYTICS_KEY
+  analytics:
+    provider: google
+    property: G-MW2L0WNJRF
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/mruoss
