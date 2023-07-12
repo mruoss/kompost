@@ -12,7 +12,7 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
 
   ### Examples
 
-  def override(%{kind: "ServiceAccount"} = resource) do
+  def override(%{"kind" => "ServiceAccount"} = resource) do
     put_in(resource, ~w(metadata labels foo)a, "bar")
   end
   """
@@ -21,43 +21,55 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
 
   @spec override(Bonny.Resource.t()) :: Bonny.Resource.t()
 
-  def override(%{kind: "Deployment"} = resource) do
+  def override(%{"kind" => "Deployment"} = resource) do
     image =
       get_in(
         resource,
         [
-          :spec,
-          :template,
-          :spec,
-          :containers,
-          Access.filter(&(&1[:name] == "kompost")),
-          :image
+          "spec",
+          "template",
+          "spec",
+          "containers",
+          Access.filter(&(&1["name"] == "kompost")),
+          "image"
         ]
       )
       |> List.first()
 
     resource
     |> update_in(
-      [:spec, :template, :spec, Access.key(:volumes, [])],
+      ["spec", "template", "spec", Access.key("volumes", [])],
       &[%{"name" => "certs", "secret" => %{"secretName" => "tls-certs", "optional" => true}} | &1]
+    )
+    |> put_in(
+      [
+        "spec",
+        "template",
+        "spec",
+        "containers",
+        Access.all(),
+        "securityContext",
+        "runAsUser"
+      ],
+      1001
     )
     |> update_in(
       [
-        :spec,
-        :template,
-        :spec,
-        :containers,
-        Access.filter(&(&1[:name] == "kompost")),
-        Access.key(:volumeMounts, [])
+        "spec",
+        "template",
+        "spec",
+        "containers",
+        Access.filter(&(&1["name"] == "kompost")),
+        Access.key("volumeMounts", [])
       ],
       &[%{"name" => "certs", "mountPath" => "/mnt/cert"} | &1]
     )
     |> update_in(
       [
-        :spec,
-        :template,
-        :spec,
-        Access.key(:initContainers, [])
+        "spec",
+        "template",
+        "spec",
+        Access.key("initContainers", [])
       ],
       fn init_containers ->
         certs = %{
@@ -71,19 +83,19 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
     )
     |> put_in(
       [
-        :spec,
-        :template,
-        :spec,
-        :containers,
-        Access.filter(&(&1[:name] == "kompost")),
-        :ports
+        "spec",
+        "template",
+        "spec",
+        "containers",
+        Access.filter(&(&1["name"] == "kompost")),
+        "ports"
       ],
       [%{"containerPort" => 4000, "name" => "webhooks"}]
     )
   end
 
-  def override(%{kind: "ClusterRole"} = resource) do
-    Map.update!(resource, :rules, fn rules ->
+  def override(%{"kind" => "ClusterRole"} = resource) do
+    Map.update!(resource, "rules", fn rules ->
       [
         ~y"""
         apiGroups: ["admissionregistration.k8s.io"]
@@ -102,19 +114,18 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
     end)
   end
 
-  def override(%{kind: "CustomResourceDefinition"} = resource) do
+  def override(%{"kind" => "CustomResourceDefinition"} = resource) do
     resource
-    |> Map.update!(:metadata, fn
-      %{:labels => labels} = metadata when labels == %{} -> Map.delete(metadata, :labels)
+    |> Map.update!("metadata", fn
+      %{"labels" => labels} = metadata when labels == %{} -> Map.delete(metadata, "labels")
       metadata -> metadata
     end)
-    |> update_in([:spec, :versions, Access.all()], fn
+    |> update_in(["spec", "versions", Access.all()], fn
       version ->
         version
-        |> Map.from_struct()
         |> Enum.reject(fn
-          {:additionalPrinterColumns, []} -> true
-          {:deprecated, false} -> true
+          {"additionalPrinterColumns", []} -> true
+          {"deprecated", false} -> true
           _ -> false
         end)
         |> Map.new()

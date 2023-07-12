@@ -20,8 +20,8 @@ COPY mix.lock mix.exs ./
 COPY config config
 
 RUN mix deps.get --only-prod && \
-    mix deps.clean --unused && \
-    mix deps.compile
+  mix deps.clean --unused && \
+  mix deps.compile
 
 # COPY priv priv
 COPY lib lib
@@ -37,13 +37,15 @@ FROM --platform=$BUILDPLATFORM ${ERLANG_IMAGE}
 # elixir expects utf8.
 ENV LANG=C.UTF-8
 
-WORKDIR /app
+WORKDIR /opt/kompost
 COPY --from=builder /app/_build/prod/rel/kompost ./
-RUN chown -R nobody: /app
+RUN chmod g+rwX /opt/kompost
 
 LABEL org.opencontainers.image.source="https://github.com/mruoss/kompost"
 LABEL org.opencontainers.image.authors="michael@michaelruoss.ch"
 
-ENTRYPOINT ["/app/bin/kompost"]
+USER 1001
+
+ENTRYPOINT ["/opt/kompost/bin/kompost"]
 CMD ["start"]
 

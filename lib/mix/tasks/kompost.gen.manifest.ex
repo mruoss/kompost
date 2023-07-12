@@ -63,6 +63,8 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     out = Keyword.fetch!(opts, :out)
 
     generate_manifest(:prod, opts)
+    |> Ymlr.documents!()
+    |> YamlElixir.read_all_from_string!()
     |> Enum.map(&KompostCustomizer.override/1)
     |> Ymlr.documents!()
     |> Mix.Bonny.render(out)
