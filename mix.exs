@@ -48,7 +48,7 @@ defmodule Kompost.MixProject do
       # {:bonny, github: "coryodaniel/bonny", branch: "master"},
       {:bonny, "~> 1.0"},
       {:jason, "~> 1.0"},
-      {:k8s_webhoox, "~> 0.1.0"},
+      {:k8s_webhoox, "~> 0.2.0"},
       {:plug, "~> 1.0"},
       {:postgrex, "~> 0.17.0"},
       {:slugger, "~> 0.3.0"},
