@@ -6,8 +6,8 @@ defmodule Kompost.Application do
     {Bandit,
      plug: Kompost.Webhooks.Router,
      port: 4000,
-     certfile: "/mnt/cert/cert.pem",
-     keyfile: "/mnt/cert/key.pem",
+     certfile: "/mnt/cert/tls.crt",
+     keyfile: "/mnt/cert/tls.key",
      scheme: :https}
   end
 
