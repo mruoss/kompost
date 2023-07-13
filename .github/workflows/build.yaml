@@ -180,7 +180,9 @@ jobs:
 
       - name: Logs
         if: steps.run-e2e.outcome == 'failure' && failure()
-        run: kubectl logs -n kompost -l k8s-app=kompost --since=1h
+        run: |
+          kubectl logs -n kompost -c init-certificates -l k8s-app=kompost --since=1h
+          kubectl logs -n kompost -c kompost -l k8s-app=kompost --since=1h
 
       - name: Build and push
         uses: docker/build-push-action@v4
