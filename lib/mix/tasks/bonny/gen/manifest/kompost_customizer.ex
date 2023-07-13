@@ -75,7 +75,7 @@ defmodule Mix.Tasks.Bonny.Gen.Manifest.KompostCustomizer do
         certs = %{
           "name" => "init-certificates",
           "image" => image,
-          "args" => ["eval", "Kompost.Webhooks.bootstrap_tls(:prod)"]
+          "args" => ["eval", ~s|Kompost.Webhooks.bootstrap_tls(:prod, "tls-certs")|]
         }
 
         [certs | init_containers]
