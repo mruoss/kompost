@@ -272,6 +272,6 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           upload_url: ${{ needs.create_gh_release.outputs.upload_url }}
-          asset_path: ./manifest${{ steps.prepare_vars.outputs.dest }}.yaml
-          asset_name: manifest${{ steps.prepare_vars.outputs.dest }}.yaml
+          asset_path: ./manifest${{ matrix.dest }}.yaml
+          asset_name: manifest${{ matrix.dest }}.yaml
           asset_content_type: application/yaml
