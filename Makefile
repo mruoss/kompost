@@ -1,6 +1,7 @@
 CLUSTER_NAME=kompost-test
 ELIXIR_IMAGE=hexpm/elixir:1.15.0-erlang-26.0.1-alpine-3.18.2
 ERLANG_IMAGE=hexpm/erlang:26.0.1-alpine-3.18.2
+MANIFEST_OUT_DIR=priv/manifest
 
 .PHONY: docker_compose
 docker_compose:
@@ -45,3 +46,11 @@ delete:
 .PHONY: docs
 docs:
 	docker run --name kompost-docs --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
+
+.PHONY: helm
+helm:
+	rm -r ${MANIFEST_OUT_DIR}
+	mkdir -p ${MANIFEST_OUT_DIR}
+	MIX_ENV=prod mix compile
+	MIX_ENV=prod mix kompost.gen.manifest --image kompost:e2e --out ${MANIFEST_OUT_DIR}
+ 

@@ -66,8 +66,29 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     |> Ymlr.documents!()
     |> YamlElixir.read_all_from_string!()
     |> Enum.map(&KompostCustomizer.override/1)
-    |> Ymlr.documents!()
-    |> Mix.Bonny.render(out)
+    |> render(out)
+  end
+
+  defp render(documents, out) do
+    if File.dir?(out) do
+      documents
+      |> Ymlr.documents!()
+      |> YamlElixir.read_all_from_string!()
+      |> Enum.map(fn
+        %{"kind" => "CustomResourceDefinition"} = resource ->
+          {"#{resource["spec"]["names"]["singular"]}.crd.yaml", resource}
+
+        resource ->
+          {"#{String.downcase(resource["kind"])}.yaml", resource}
+      end)
+      |> Enum.each(fn {filename, resource} ->
+        Mix.Bonny.render(Ymlr.document!(resource), Path.join(out, filename))
+      end)
+    else
+      documents
+      |> Ymlr.documents!()
+      |> Mix.Bonny.render(out)
+    end
   end
 
   @spec ensure_cluster(cluster_name :: binary(), kubeconfig_path :: binary()) :: :ok
