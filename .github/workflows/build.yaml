@@ -94,9 +94,9 @@ jobs:
             TAG=dev
           fi
 
-          echo "cache_src=ghcr.io/${{ github.repository }}/kompost:dev${{ matrix.dest }}" >> $GITHUB_OUTPUT
-          echo "e2e_image=ghcr.io/${{ github.repository }}/kompost:e2e${{ matrix.dest }}" >> $GITHUB_OUTPUT
-          echo "dest_image=ghcr.io/${{ github.repository }}/kompost:${TAG#v}${{ matrix.dest }}" >> $GITHUB_OUTPUT
+          echo "cache_src=ghcr.io/${{ github.repository }}:dev${{ matrix.dest }}" >> $GITHUB_OUTPUT
+          echo "e2e_image=ghcr.io/${{ github.repository }}:e2e${{ matrix.dest }}" >> $GITHUB_OUTPUT
+          echo "dest_image=ghcr.io/${{ github.repository }}:${TAG#v}${{ matrix.dest }}" >> $GITHUB_OUTPUT
 
       - name: Build E2E Image
         uses: docker/build-push-action@v4
