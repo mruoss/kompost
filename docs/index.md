@@ -14,4 +14,5 @@ Kompost comes with a set of components, aka. Kompos. Kompos are independent
 from each other. Each one serves its own set of CRDs and provides a service
 on its own.
 
-The most mature Kompo at this moment is [Postgres](postgres).
+The most mature Kompo at this moment is [Postgres](postgres). Besides, there
+is the [Temporal](temporal) Kompo currently being developed.

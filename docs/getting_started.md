@@ -21,8 +21,10 @@ kubectl describe -n kompost deploy/kompost
 
 ## Helm Chart
 
-There is no helm chart for this operator at the moment.
+There is a helm chart you can use to install Kompost. Checkout the templates and
+default values on [Artifact
+Hub](https://artifacthub.io/packages/helm/kompost/kompost)
 
-## Next Step
-
-Start using Kompos.
+```
+helm template -n kompost kompost oci://ghcr.io/mruoss/kompost/kompost --version 0.1.0
+```

@@ -69,6 +69,7 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
     |> render(out)
   end
 
+  @spec render(list(map()), binary()) :: :ok
   defp render(documents, out) do
     if File.dir?(out) do
       documents
@@ -89,6 +90,8 @@ defmodule Mix.Tasks.Kompost.Gen.Manifest do
       |> Ymlr.documents!()
       |> Mix.Bonny.render(out)
     end
+
+    :ok
   end
 
   @spec ensure_cluster(cluster_name :: binary(), kubeconfig_path :: binary()) :: :ok
