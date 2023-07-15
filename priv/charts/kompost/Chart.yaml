@@ -55,14 +55,14 @@ annotations:
         - linux/arm/v7
         - linux/arm64
     - name: kompost-slim
-      image: hcr.io/mruoss/kompost:latest-slim
+      image: ghcr.io/mruoss/kompost:latest-slim
       whitelisted: true
       platforms:
         - linux/amd64
         - linux/arm/v7
         - linux/arm64
     - name: kompost-alpine
-      image: hcr.io/mruoss/kompost:latest-alpine
+      image: ghcr.io/mruoss/kompost:latest-alpine
       platforms:
         - linux/amd64
         - linux/arm/v7
