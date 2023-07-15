@@ -49,7 +49,7 @@ docs:
 
 .PHONY: helm
 helm:
-	rm -r ${MANIFEST_OUT_DIR}
+	rm -rf ${MANIFEST_OUT_DIR}
 	mkdir -p ${MANIFEST_OUT_DIR}
 	MIX_ENV=prod mix compile
 	MIX_ENV=prod mix kompost.gen.manifest --image kompost:e2e --out ${MANIFEST_OUT_DIR}

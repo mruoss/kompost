@@ -30,5 +30,3 @@ kompost-*.tar
 /manifest*.yaml
 
 /site
-
-/priv/manifest

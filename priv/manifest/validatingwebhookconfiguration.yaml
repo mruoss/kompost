@@ -1,0 +1,30 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: kompost
+webhooks:
+  - admissionReviewVersions:
+      - v1
+    clientConfig:
+      service:
+        name: kompost
+        namespace: kompost
+        path: /postgres/admission-review/validating
+        port: 443
+    failurePolicy: Ignore
+    matchPolicy: Equivalent
+    name: postgres.kompost.chuge.li
+    rules:
+      - apiGroups:
+          - kompost.chuge.li
+        apiVersions:
+          - v1alpha1
+        operations:
+          - CREATE
+          - UPDATE
+        resources:
+          - postgresdatabases
+          - postgresclusterinstances
+          - postgresinstances
+    sideEffects: None

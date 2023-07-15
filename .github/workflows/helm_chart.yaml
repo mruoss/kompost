@@ -1,0 +1,52 @@
+name: Publish Helm Repository
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  MIX_ENV: prod
+  KUBECONFIG: /home/runner/.kube/config
+  HELM_DOCS_VERSION: 1.11.0
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish_chart:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: install helm-docs
+        run: |
+          cd /tmp
+          wget https://github.com/norwoodj/helm-docs/releases/download/v${{ env.HELM_DOCS_VERSION }}/helm-docs_${{ env.HELM_DOCS_VERSION }}_Linux_x86_64.tar.gz
+          tar -xvf helm-docs_${{ env.HELM_DOCS_VERSION }}_Linux_x86_64.tar.gz
+          sudo mv helm-docs /usr/local/sbin
+
+      - name: helm docs
+        run: |
+          cd priv/charts/kompost
+          helm-docs
+      - name: helm lint
+        run: |
+          helm lint priv/charts/kompost
+      - name: helm login
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u $ --password-stdin
+      - name: helm package
+        run: |
+          helm package priv/charts/kompost
+      - name: helm push
+        if: ${{ github.event_name == 'push' }}
+        run: |
+          helm push kompost-*.tgz oci://ghcr.io/${{ github.repository_owner }}/charts
+      - name: Upload artifacthub-repo.yml
+        run: |
+          echo ${{ secrets.GITHUB_TOKEN }} | oras login ghcr.io -u mruoss --password-stdin
+          oras push \
+            ghcr.io/${{ github.repository_owner }}/charts/kompost:artifacthub.io \
+            --config /dev/null:application/vnd.cncf.artifacthub.config.v1+yaml \
+            priv/charts/kompost/artifacthub-repo.yml:application/vnd.cncf.artifacthub.repository-metadata.layer.v1.yaml

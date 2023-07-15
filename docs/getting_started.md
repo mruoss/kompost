@@ -26,5 +26,5 @@ default values on [Artifact
 Hub](https://artifacthub.io/packages/helm/kompost/kompost)
 
 ```
-helm template -n kompost kompost oci://ghcr.io/mruoss/helm-charts/kompost --version 0.1.0
+helm template -n kompost kompost oci://ghcr.io/mruoss/kompost --version 0.1.0
 ```

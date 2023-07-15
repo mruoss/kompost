@@ -1,0 +1,32 @@
+{{- $chartRepo := "oci://ghcr.io/mruoss" -}}
+{{- $org := "kompost" -}}
+# Kompost
+
+To regenerate this document, from the root of this chart directory run:
+```shell
+docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:latest
+```
+
+{{ template "chart.typeBadge" . }}{{ template "chart.versionBadge" . }}
+
+{{ template "chart.description" . }}
+
+## TL;DR
+```bash
+helm install -n kompost kompost {{ $chartRepo }}/{{ template "chart.name" . }}
+```
+
+## Installing the Chart
+To install the chart with the release name `{{ template "chart.name" . }}`:
+```bash
+helm install -n {{ template "chart.name" . }} {{ template "chart.name" . }} {{ $chartRepo }}/{{ template "chart.name" . }}
+```
+
+## Uninstalling the Chart
+To uninstall the `{{ template "chart.name" . }}` deployment:
+```bash
+helm uninstall {{ template "chart.name" . }}
+```
+The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+{{ template "chart.valuesSection" . }}
