@@ -1,7 +1,5 @@
 # Kompost
 
-https://kompost.chuge.li
-
 Kompost is a Kubernetes operator providing self-service management for
 developers to install infrastructure resources.
 
@@ -12,6 +10,12 @@ committing to their infra repo when using ArgoCD.
 
 Kompost was written in Elixir, using [`bonny`](https://hexdocs.pm/bonny), a Kubernetes development
 framework written in Elixir.
+
+## Links
+
+- [GitHub Repository](https://github.com/mruoss/kompost)
+- [Documentation](https://kompost.chuge.li)
+- [Helm Chart on ArtifactHUB](https://artifacthub.io/packages/helm/kompost/kompost)
 
 ## Usage Example
 

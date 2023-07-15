@@ -8,6 +8,12 @@ on Kubernetes. Once installed it prvides development teams a declarateive way of
 creating infrastructure resources by applying Kubernetes resources to their
 clusters or committing to their infra repo when using GitOps.
 
+## Links
+
+- [:simple-github: GitHub Repository](https://github.com/mruoss/kompost)
+- [:simple-readthedocs: Documentation](https://kompost.chuge.li)
+- [:simple-artifacthub: Helm Chart on ArtifactHUB](https://artifacthub.io/packages/helm/kompost/kompost)
+
 ## Kompos
 
 Kompost comes with a set of components, aka. Kompos. Kompos are independent
