@@ -43,3 +43,27 @@ annotations:
       url: https://github.com/mruoss/kompost
     - name: Documentation
       url: https://kompost.chuge.li
+  artifacthub.io/signKey: |
+    fingerprint: 4B95C7BE876C3E22ED79A56F15B49C3F51E14030
+    url: https://github.com/mruoss/kompost/raw/main/priv/charts/pubkey.asc    
+  artifacthub.io/images: |
+    - name: kompost
+      image: ghcr.io/mruoss/kompost:latest
+      whitelisted: true
+      platforms:
+        - linux/amd64
+        - linux/arm/v7
+        - linux/arm64
+    - name: kompost-slim
+      image: hcr.io/mruoss/kompost:latest-slim
+      whitelisted: true
+      platforms:
+        - linux/amd64
+        - linux/arm/v7
+        - linux/arm64
+    - name: kompost-alpine
+      image: hcr.io/mruoss/kompost:latest-alpine
+      platforms:
+        - linux/amd64
+        - linux/arm/v7
+        - linux/arm64

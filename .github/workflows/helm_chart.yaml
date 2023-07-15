@@ -38,7 +38,8 @@ jobs:
           echo ${{ secrets.GITHUB_TOKEN }} | helm registry login ghcr.io -u $ --password-stdin
       - name: helm package
         run: |
-          helm package priv/charts/kompost
+          echo "${{ secrets.CHART_SIGN_PRIVATE_KEY }}" | gpg --dearmor --output keyring.gpg
+          helm package --sign --key 'Michael Ruoss (Kompost Helm Package Signing)' --keyring keyring.gpg priv/charts/kompost
       - name: helm push
         if: ${{ github.event_name == 'push' }}
         run: |
