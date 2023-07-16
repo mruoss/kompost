@@ -27,7 +27,3 @@ way to install databases on those instances on their own.
 
 To install Kompost, just download the manifest from the [release
 page](https://github.com/mruoss/kompost/releases) and apply it to your cluster.
-
-## Documentation
-
-Find the documentation on https://kompost.chuge.li
