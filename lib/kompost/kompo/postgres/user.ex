@@ -3,6 +3,8 @@ defmodule Kompost.Kompo.Postgres.User do
   Connector to operate on Postgres users/roles via Postgrex.
   """
 
+  alias Kompost.Kompo.Postgres.Utils
+
   @doc """
   Creates a user if it does not exist. The user created on the instance will be
   named `db_name`_`username` in order for the username to be unique.
@@ -51,10 +53,6 @@ defmodule Kompost.Kompo.Postgres.User do
           {:error, Exception.message(exception)}
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
-
-  @spec process_trx_result({:ok, :ok} | term()) :: :ok | term()
-  defp process_trx_result({:ok, :ok}), do: :ok
-  defp process_trx_result(error), do: error
 end

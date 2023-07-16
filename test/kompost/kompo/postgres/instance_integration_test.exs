@@ -34,59 +34,61 @@ defmodule Kompost.Kompo.Postgres.InstanceIntegrationTest do
     :ok
   end
 
-  @tag :integration
-  @tag :postgres
-  test "returns :ok when all good" do
-    result =
-      start_supervised!({
-        Postgrex,
-        host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
-        port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
-        username: System.fetch_env!("POSTGRES_USER"),
-        password: System.fetch_env!("POSTGRES_PASSWORD"),
-        host: "127.0.0.1",
-        database: "postgres"
-      })
-      |> MUT.check_privileges()
+  describe "check_privileges/1" do
+    @tag :integration
+    @tag :postgres
+    test "returns :ok when all good" do
+      result =
+        start_supervised!({
+          Postgrex,
+          host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
+          port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
+          username: System.fetch_env!("POSTGRES_USER"),
+          password: System.fetch_env!("POSTGRES_PASSWORD"),
+          host: "127.0.0.1",
+          database: "postgres"
+        })
+        |> MUT.check_privileges()
 
-    assert :ok == result
-  end
+      assert :ok == result
+    end
 
-  @tag :integration
-  @tag :postgres
-  test "returns error when user has no privilege to create databases" do
-    result =
-      start_supervised!(
-        {Postgrex,
-         host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
-         port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
-         username: "nocreatedb",
-         password: "password",
-         host: "127.0.0.1",
-         database: "postgres"}
-      )
-      |> MUT.check_privileges()
+    @tag :integration
+    @tag :postgres
+    test "returns error when user has no privilege to create databases" do
+      result =
+        start_supervised!(
+          {Postgrex,
+           host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
+           port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
+           username: "nocreatedb",
+           password: "password",
+           host: "127.0.0.1",
+           database: "postgres"}
+        )
+        |> MUT.check_privileges()
 
-    assert {:error, "The user does not have the privilege to create databases"} ==
-             result
-  end
+      assert {:error, "The user does not have the privilege to create databases"} ==
+               result
+    end
 
-  @tag :integration
-  @tag :postgres
-  test "returns error when user has no privilege to create roles" do
-    result =
-      start_supervised!(
-        {Postgrex,
-         host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
-         port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
-         username: "nocreaterole",
-         password: "password",
-         host: "127.0.0.1",
-         database: "postgres"}
-      )
-      |> MUT.check_privileges()
+    @tag :integration
+    @tag :postgres
+    test "returns error when user has no privilege to create roles" do
+      result =
+        start_supervised!(
+          {Postgrex,
+           host: System.get_env("POSTGRES_HOST", "127.0.0.1"),
+           port: System.fetch_env!("POSTGRES_EXPOSED_PORT"),
+           username: "nocreaterole",
+           password: "password",
+           host: "127.0.0.1",
+           database: "postgres"}
+        )
+        |> MUT.check_privileges()
 
-    assert {:error, reason} = result
-    assert reason =~ "The user does not have the privilege to create users"
+      assert {:error, reason} = result
+      assert reason =~ "The user does not have the privilege to create users"
+    end
   end
 end
