@@ -9,7 +9,7 @@ defmodule Kompost.Kompo.Postgres.DatabaseIntegrationTest do
     :ok
   end
 
-  describe "apply_extensions/2 and drop_extensions/2" do
+  describe "apply_extensions/2" do
     setup do
       conn =
         start_supervised!(PostgrexHelper.child_spec(), id: :postgres)
@@ -32,7 +32,7 @@ defmodule Kompost.Kompo.Postgres.DatabaseIntegrationTest do
 
     @tag :integration
     @tag :postgres
-    test "apply creates extensions if they don't exist", %{db_conn: db_conn} do
+    test "creates extensions if they don't exist", %{db_conn: db_conn} do
       result = Postgrex.query!(db_conn, "SELECT extname FROM pg_extension", [])
       extensions = result.rows |> List.flatten()
       assert "pgcrypto" not in extensions
@@ -48,7 +48,8 @@ defmodule Kompost.Kompo.Postgres.DatabaseIntegrationTest do
 
     @tag :integration
     @tag :postgres
-    test "apply removes extensions from DB if they don't exist", %{db_conn: db_conn} do
+    @tag :wip
+    test "drops extensions from DB if they are note wanted", %{db_conn: db_conn} do
       Postgrex.query!(db_conn, ~s(CREATE EXTENSION IF NOT EXISTS "pgcrypto"), [])
       Postgrex.query!(db_conn, ~s(CREATE EXTENSION IF NOT EXISTS "uuid-ossp"), [])
       result = Postgrex.query!(db_conn, "SELECT extname FROM pg_extension", [])
@@ -57,12 +58,12 @@ defmodule Kompost.Kompo.Postgres.DatabaseIntegrationTest do
       assert "pgcrypto" in extensions
       assert "uuid-ossp" in extensions
 
-      assert :ok == MUT.drop_extensions(db_conn, ["pgcrypto", "uuid-ossp"])
+      assert :ok == MUT.apply_extensions(db_conn, ["uuid-ossp"])
 
       result = Postgrex.query!(db_conn, "SELECT extname FROM pg_extension", [])
       extensions = result.rows |> List.flatten()
       assert "pgcrypto" not in extensions
-      assert "uuid-ossp" not in extensions
+      assert "uuid-ossp" in extensions
     end
   end
 end
