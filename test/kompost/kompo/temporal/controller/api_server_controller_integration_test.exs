@@ -41,6 +41,7 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
 
   describe "Connected" do
     @tag :integration
+    @tag :temporal
     test "Connected condition status is False if connection to temporal could not be established",
          %{
            conn: conn,
@@ -61,6 +62,7 @@ defmodule Kompost.Kompo.Temporal.Controller.ApiServerControllerIntegrationTest d
     end
 
     @tag :integration
+    @tag :temporal
     test "Connected condition status is True if connection to temporal was established",
          %{
            conn: conn,

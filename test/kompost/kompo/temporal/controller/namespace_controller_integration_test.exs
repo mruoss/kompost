@@ -52,6 +52,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
 
   describe "Connected" do
     @tag :integration
+    @tag :temporal
     test "Connected condition status is False if connection to temporal could not be established",
          %{
            conn: conn,
@@ -78,6 +79,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     end
 
     @tag :integration
+    @tag :temporal
     test "Connected condition status is True if connection to temporal was established",
          %{
            conn: conn,
@@ -104,6 +106,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
   describe "Created" do
     # Currently don't know how to provoke this
     # @tag :integration
+    # @tag :temporal
     # test "Created condition status is False if Namespace could not be created",
     #      %{
     #        conn: conn,
@@ -131,6 +134,7 @@ defmodule Kompost.Kompo.Temporal.Controller.NamespaceControllerIntegrationTest d
     # end
 
     @tag :integration
+    @tag :temporal
     test "Created condition status is True if Namespace was created",
          %{
            conn: conn,
