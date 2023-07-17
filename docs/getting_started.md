@@ -28,3 +28,11 @@ Hub](https://artifacthub.io/packages/helm/kompost/kompost)
 ```
 helm template -n kompost kompost oci://ghcr.io/mruoss/kompost --version 0.1.0
 ```
+
+## Work with Kompos
+
+Once the operator is installed, you can work with the Kompos. Check out their
+documentation:
+
+- [Postgres](postgres)
+- [Temporal](temporal)
