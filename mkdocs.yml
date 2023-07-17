@@ -13,18 +13,18 @@ copyright: Copyright &copy; 2023 Michael Ruoss
 
 nav:
   - Kompost:
-    - Introduction: index.md
-    - Getting Started: getting_started.md
+      - Introduction: index.md
+      - Getting Started: getting_started.md
   - Postgres:
-    - Introduction: postgres/index.md
-    - PostgresInstance: postgres/postgres_instance.md
-    - PostgresClusterInstance: postgres/postgres_cluster_instance.md
-    - PostgresDatabase: postgres/postgres_database.md
+      - Introduction: postgres/index.md
+      - PostgresInstance: postgres/postgres_instance.md
+      - PostgresClusterInstance: postgres/postgres_cluster_instance.md
+      - PostgresDatabase: postgres/postgres_database.md
   - Temporal:
-    - Introduction: temporal/index.md
+      - Introduction: temporal/index.md
 theme:
   name: material
-  palette:    
+  palette:
     # Palette toggle for light mode
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -76,8 +76,6 @@ extra:
   analytics:
     provider: google
     property: G-MW2L0WNJRF
-  version:
-    provider: mike
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/mruoss
