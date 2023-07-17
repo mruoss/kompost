@@ -34,5 +34,5 @@ helm template -n kompost kompost oci://ghcr.io/mruoss/kompost --version 0.1.0
 Once the operator is installed, you can work with the Kompos. Check out their
 documentation:
 
-- [Postgres](postgres)
-- [Temporal](temporal)
+- [Postgres](/postgres)
+- [Temporal](/temporal)
