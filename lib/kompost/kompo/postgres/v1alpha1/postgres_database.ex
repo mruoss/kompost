@@ -24,6 +24,8 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
               - required: ["instanceRef"]
               - required: ["clusterInstanceRef"]
             properties:
+              usingPrefixNamingStrategy:
+                type: boolean
               instanceRef:
                 type: object
                 properties:
