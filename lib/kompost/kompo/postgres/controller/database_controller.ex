@@ -274,7 +274,6 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
 
   defp to_naming_strategy(strategy) when is_nil(strategy), do: true
   defp to_naming_strategy(strategy), do: to_boolean(strategy)
-  defp to_boolean("true"), do: true
   defp to_boolean("false"), do: false
   defp to_boolean(_), do: true
 end
