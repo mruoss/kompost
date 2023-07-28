@@ -14,10 +14,19 @@ defmodule Kompost.Kompo.Postgres.Database do
       ...> Kompost.Kompo.Postgres.Database.name(resource)
       "default_foo_bar"
   """
-  @spec name(map()) :: binary()
-  def name(resource) do
+  @spec name(map(), boolean()) :: binary()
+  def name(resource, name_strategy \\ true)
+
+  def name(resource, true) do
     Slugger.slugify_downcase(
       "#{resource["metadata"]["namespace"]}_#{resource["metadata"]["name"]}",
+      ?_
+    )
+  end
+
+  def name(resource, false) do
+    Slugger.slugify_downcase(
+      "#{resource["metadata"]["name"]}",
       ?_
     )
   end

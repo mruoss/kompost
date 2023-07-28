@@ -19,6 +19,7 @@ metadata:
 spec:
   instanceRef:
     name: staging-server
+  usingPrefixNamingStrategy: true  
 ```
 
 ## Connection Details
