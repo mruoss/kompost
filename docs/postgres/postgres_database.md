@@ -18,9 +18,27 @@ metadata:
   namespace: default
 spec:
   instanceRef:
-    name: staging-server
-  usingPrefixNamingStrategy: true  
+    name: staging-server  
 ```
+
+Based on the CRD definition above, it will create a database called `default_some_database`, 
+where the appended prefix `default_` is the previously informed namespaced.
+To avoid the use of the namespace you can set the `usingPrefixNamingStrategy` 
+attribute to false. See example bellow:
+
+```yaml
+apiVersion: kompost.chuge.li/v1alpha1
+kind: PostgresDatabase
+metadata:
+  name: some-database
+  namespace: default
+spec:
+  instanceRef:
+    name: staging-server
+  usingPrefixNamingStrategy: false
+```
+
+In this case the final name of the database will be `some_database`.
 
 ## Connection Details
 
@@ -85,7 +103,7 @@ metadata:
     kompost.chuge.li/deletion-policy: abandon # <-- underlying resources are abandoned (not deleted) when this resource gets deleted
 spec:
   instanceRef:
-    name: staging-server
+    name: staging-server  
 ```
 
 ## Database Creation Parameters
