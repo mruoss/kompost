@@ -13,6 +13,10 @@ defmodule Kompost.Kompo.Postgres.Database do
       iex> resource = %{"metadata" => %{"namespace" => "default", "name" => "foo-bar"}}
       ...> Kompost.Kompo.Postgres.Database.name(resource)
       "default_foo_bar"
+
+      iex> resource = %{"metadata" => %{"namespace" => "default", "name" => "foo-bar"}}
+      ...> Kompost.Kompo.Postgres.Database.name(resource, false)
+      "foo_bar"
   """
   @spec name(map(), boolean()) :: binary()
   def name(resource, name_strategy \\ true)
