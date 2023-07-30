@@ -33,25 +33,14 @@ jobs:
       - name: Build Matrix from hexpm Docker Image Tags
         id: build-matrix
         run: |
-          TOKEN=$(curl --request POST \
-            --url https://registry.hub.docker.com/v2/users/login \
-            --header 'Content-Type: application/json' \
-            --data '{
-              "username": "${{ secrets.DOCKERHUB_USERNAME }}",
-              "password": "${{ secrets.DOCKERHUB_TOKEN }}"
-            }' \
-            | jq -r .token)
-
           ERLANG_SLIM=$(curl --request GET \
             --url "https://registry.hub.docker.com/v2/namespaces/hexpm/repositories/erlang/tags?name=${{ steps.versions.outputs.erlang }}-debian-bullseye-%25-slim&page_size=25&ordering=name" \
-            --header "Authorization: Bearer ${TOKEN}" \
             | jq -r ".results[0].name")
 
           ERLANG_DEBIAN=${ERLANG_SLIM%-slim}
 
           ERLANG_ALPINE=$(curl --request GET \
             --url "https://registry.hub.docker.com/v2/namespaces/hexpm/repositories/erlang/tags?name=${{ steps.versions.outputs.erlang }}-alpine&page_size=25&ordering=name" \
-            --header "Authorization: Bearer ${TOKEN}" \
             | jq -r ".results[0].name")
 
 

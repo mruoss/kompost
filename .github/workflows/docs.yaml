@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    name: Deploy docs
+    name: Build docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout main
@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: 3.x
 
-      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV 
-      
+      - run: echo "cache_id=$(date --utc '+%V')" >> $GITHUB_ENV
+
       - uses: actions/cache@v3
         with:
           key: mkdocs-material-${{ env.cache_id }}
@@ -27,7 +27,7 @@ jobs:
           restore-keys: |
             mkdocs-material-
 
-      - run: pip install mkdocs-material 
+      - run: pip install mkdocs-material
 
       - run: mkdocs build
 
@@ -35,14 +35,15 @@ jobs:
         uses: actions/upload-pages-artifact@v2
         with:
           path: site
-        
-  deploy:  
+
+  deploy:
     runs-on: ubuntu-latest
+    name: Deploy to GH Pages
     needs: build
     if: github.event_name == 'push'
     permissions:
-      pages: write     
-      id-token: write  
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
