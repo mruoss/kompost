@@ -35,9 +35,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   def handle_event(%Bonny.Axn{action: action} = axn, _opts)
       when action in [:add, :modify, :reconcile] do
     resource = axn.resource
-    using_prefix_strategy? = to_naming_strategy(resource["spec"]["usingPrefixNamingStrategy"])
     namespace = resource["metadata"]["namespace"]
-    db_name = Database.name(resource, using_prefix_strategy?)
+
+    using_prefix_strategy? =
+      resource["spec"]["usingPrefixNamingStrategy"] != "true"
+
+    db_name = Database.name(resource, prefix_namespace: using_prefix_strategy?)
     db_params = Params.new!(resource["spec"]["params"] || %{})
     instance = resource |> instance_id() |> Instance.lookup()
 
@@ -133,8 +136,8 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   @spec delete_resources(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
   def delete_resources(axn) do
     resource = axn.resource
-    using_prefix_strategy? = to_naming_strategy(resource["spec"]["usingPrefixNamingStrategy"])
-    db_name = Database.name(resource, using_prefix_strategy?)
+    using_prefix_strategy? = resource["spec"]["usingPrefixNamingStrategy"] != "true"
+    db_name = Database.name(resource, prefix_namespace: using_prefix_strategy?)
     users = resource["status"]["users"]
     instance = resource |> instance_id() |> Instance.lookup()
 
@@ -271,9 +274,4 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   defp instance_id(%{"spec" => %{"clusterInstanceRef" => %{}}} = resource) do
     {:cluster, resource["spec"]["clusterInstanceRef"]["name"]}
   end
-
-  defp to_naming_strategy(strategy) when is_nil(strategy), do: true
-  defp to_naming_strategy(strategy), do: to_boolean(strategy)
-  defp to_boolean("false"), do: false
-  defp to_boolean(_), do: true
 end
