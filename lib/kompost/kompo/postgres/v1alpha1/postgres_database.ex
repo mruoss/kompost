@@ -24,8 +24,6 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
               - required: ["instanceRef"]
               - required: ["clusterInstanceRef"]
             properties:
-              usingPrefixNamingStrategy:
-                type: boolean
               instanceRef:
                 type: object
                 properties:
@@ -36,6 +34,10 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
                 properties:
                   name:
                     type: string
+              databaseNamingStrategy:
+                type: string
+                enum: ["resource_name", "prefix_namespace"]
+                description: "(Optional) Strategy to derive the name of the `database` on the server. resource_name uses the resource name as DB name. `prefix_namespace` prefixes the resource name with the namespace. Defaults to `prefix_namespace`"
               params:
                 description: "Parameters passed to CREATE TEMPLATE."
                 type: object

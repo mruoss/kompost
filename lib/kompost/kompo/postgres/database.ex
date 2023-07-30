@@ -15,25 +15,23 @@ defmodule Kompost.Kompo.Postgres.Database do
       "default_foo_bar"
 
       iex> resource = %{"metadata" => %{"namespace" => "default", "name" => "foo-bar"}}
-      ...> Kompost.Kompo.Postgres.Database.name(resource, prefix_namespace:  false)
+      ...> Kompost.Kompo.Postgres.Database.name(resource, strategy: "resource_name")
       "foo_bar"
   """
   @spec name(map(), Keyword.t()) :: binary()
   def name(resource, opts \\ [])
 
   def name(resource, opts) do
-    prefix_namespace = Keyword.get(opts, :prefix_namespace, true)
-
-    case prefix_namespace do
-      true ->
+    case Keyword.get(opts, :strategy, "prefix_namespace") do
+      "resource_name" ->
         Slugger.slugify_downcase(
-          "#{resource["metadata"]["namespace"]}_#{resource["metadata"]["name"]}",
+          "#{resource["metadata"]["name"]}",
           ?_
         )
 
-      _ ->
+      "prefix_namespace" ->
         Slugger.slugify_downcase(
-          "#{resource["metadata"]["name"]}",
+          "#{resource["metadata"]["namespace"]}_#{resource["metadata"]["name"]}",
           ?_
         )
     end
