@@ -18,27 +18,8 @@ metadata:
   namespace: default
 spec:
   instanceRef:
-    name: staging-server  
-```
-
-Based on the CRD definition above, it will create a database called `default_some_database`, 
-where the appended prefix `default_` is the previously informed namespaced.
-To avoid the use of the namespace you can set the `usingPrefixNamingStrategy` 
-attribute to false. See example bellow:
-
-```yaml
-apiVersion: kompost.chuge.li/v1alpha1
-kind: PostgresDatabase
-metadata:
-  name: some-database
-  namespace: default
-spec:
-  instanceRef:
     name: staging-server
-  usingPrefixNamingStrategy: false
 ```
-
-In this case the final name of the database will be `some_database`.
 
 ## Connection Details
 
@@ -85,6 +66,44 @@ data:
   DB_USER: ZGVmYXVsdF9zb21lX2RhdGFiYXNlX2FwcA==
 ```
 
+## Database Naming Strategy
+
+The field `databaseNamingStrategy` controls how the database name is derived
+from the resource name. Possible values are `resource_name` and
+`prefix_namespace`. The default strategy is `prefix_namespace`.
+
+### Strategies
+
+- `resource_name`: Use the resource name as database name
+- `prefix_namespace`: Prefix the resource name with the namespace to get a
+  cluster-wide unique name.
+
+### Example
+
+Taking the [basic usage example](#basic-usage) from above, the resulting
+database on the server is named `default_some_database`.
+
+```yaml
+apiVersion: kompost.chuge.li/v1alpha1
+kind: PostgresDatabase
+metadata:
+  name: some-database
+  namespace: default
+spec:
+  instanceRef:
+    name: staging-server
+  databaseNamingStrategy: resource_name
+```
+
+The resulting database on the server is named `some_database`.
+
+!!! warning Strategy resource_name can lead to conflicts
+
+    Using the `resource_name` strategy can lead to conflicts. If you define
+    `PostgresDatabase` resources with the same name in different namespaces,
+    both resources would control the same database on the server. Therefore the
+    default strategy is `prefix_namespace`
+
 ## Deletion Policy - Abandoning Underlying Resources
 
 When using Kompost on a live environment, you might want to protect the
@@ -103,7 +122,7 @@ metadata:
     kompost.chuge.li/deletion-policy: abandon # <-- underlying resources are abandoned (not deleted) when this resource gets deleted
 spec:
   instanceRef:
-    name: staging-server  
+    name: staging-server
 ```
 
 ## Database Creation Parameters
@@ -113,7 +132,7 @@ parameters](https://www.postgresql.org/docs/current/sql-createdatabase.html)
 when creating a database. Some of these parameters are supported by Kompost and
 can be passed in `spec.params`.
 
-!!! note Creation params cannot be changed 
+!!! note Creation params cannot be changed
 
     These parameters are only used when the database is created. Kompost therefore denies requests to change them on an existing resource.
 

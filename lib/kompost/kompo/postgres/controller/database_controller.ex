@@ -37,10 +37,11 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
     resource = axn.resource
     namespace = resource["metadata"]["namespace"]
 
-    using_prefix_strategy? =
-      resource["spec"]["usingPrefixNamingStrategy"] != "true"
+    db_name =
+      Database.name(resource,
+        strategy: resource["spec"]["databaseNamingStrategy"] || "prefix_namespace"
+      )
 
-    db_name = Database.name(resource, prefix_namespace: using_prefix_strategy?)
     db_params = Params.new!(resource["spec"]["params"] || %{})
     instance = resource |> instance_id() |> Instance.lookup()
 
@@ -136,8 +137,12 @@ defmodule Kompost.Kompo.Postgres.Controller.DatabaseController do
   @spec delete_resources(Bonny.Axn.t()) :: {:ok, Bonny.Axn.t()} | {:error, Bonny.Axn.t()}
   def delete_resources(axn) do
     resource = axn.resource
-    using_prefix_strategy? = resource["spec"]["usingPrefixNamingStrategy"] != "true"
-    db_name = Database.name(resource, prefix_namespace: using_prefix_strategy?)
+
+    db_name =
+      Database.name(resource,
+        strategy: resource["spec"]["databaseNamingStrategy"] || "prefix_namespace"
+      )
+
     users = resource["status"]["users"]
     instance = resource |> instance_id() |> Instance.lookup()
 
