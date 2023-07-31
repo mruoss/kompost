@@ -17,6 +17,7 @@ defmodule Kompost.Kompo.Postgres.Webhooks.AdmissionControlHandler do
     |> check_immutable(["spec", "params", "lc_ctype"])
     |> check_immutable(["spec", "params", "connection_limit"])
     |> check_immutable(["spec", "params", "is_template"])
+    |> check_immutable(["spec", "databaseNamingStrategy"])
   end
 
   validate "kompost.chuge.li/v1alpha1/postgresclusterinstances", conn do
