@@ -9,7 +9,7 @@ page](https://github.com/mruoss/kompost/releases/tag/v0.2.3) and apply it to
 your cluster:
 
 ```bash
-curl -L https://github.com/mruoss/kompost/releases/download/v0.3.0/manifest-alpine.yaml | kubectl apply -f -
+curl -L https://github.com/mruoss/kompost/releases/download/v0.3.0/manifest.yaml | kubectl apply -f -
 ```
 
 This installs the CRDs, creates a namespace `kompost` and installs Kompost inside it.

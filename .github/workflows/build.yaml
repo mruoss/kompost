@@ -15,12 +15,14 @@ env:
   KUBECONFIG: /home/runner/.kube/config
 
 jobs:
-  build_matrix:
+  build_container_image:
     runs-on: ubuntu-latest
-    outputs:
-      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    permissions:
+      packages: write
+      contents: write
     steps:
       - uses: actions/checkout@v3
+
       - name: Parse .tool-versions
         id: versions
         run: |
@@ -30,36 +32,17 @@ jobs:
 
             echo "$NAME=$VALUE" >> $GITHUB_OUTPUT
           done < .tool-versions
-      - name: Build Matrix from hexpm Docker Image Tags
-        id: build-matrix
+
+      - name: Get hexpm Docker Image Tags
+        id: get-images
         run: |
-          ERLANG_SLIM=$(curl --request GET \
-            --url "https://registry.hub.docker.com/v2/namespaces/hexpm/repositories/erlang/tags?name=${{ steps.versions.outputs.erlang }}-debian-bullseye-%25-slim&page_size=25&ordering=name" \
-            | jq -r ".results[0].name")
-
-          ERLANG_DEBIAN=${ERLANG_SLIM%-slim}
-
           ERLANG_ALPINE=$(curl --request GET \
             --url "https://registry.hub.docker.com/v2/namespaces/hexpm/repositories/erlang/tags?name=${{ steps.versions.outputs.erlang }}-alpine&page_size=25&ordering=name" \
             | jq -r ".results[0].name")
-
-
-          ELIXIR_SLIM=${{ steps.versions.outputs.elixir }}-erlang-${ERLANG_SLIM}
-          ELIXIR_DEBIAN=${{ steps.versions.outputs.elixir }}-erlang-${ERLANG_DEBIAN}
           ELIXIR_ALPINE=${{ steps.versions.outputs.elixir }}-erlang-${ERLANG_ALPINE}
 
-          echo "matrix={\"include\":[{\"erlang_image\":\"hexpm/erlang:${ERLANG_DEBIAN}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_DEBIAN}\",\"dest\":\"\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_SLIM}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_SLIM}\",\"dest\":\"-slim\"},{\"erlang_image\":\"hexpm/erlang:${ERLANG_ALPINE}\",\"elixir_image\":\"hexpm/elixir:${ELIXIR_ALPINE}\",\"dest\":\"-alpine\"}]}" >> $GITHUB_OUTPUT
-
-  build_container_image:
-    runs-on: ubuntu-latest
-    needs: build_matrix
-    strategy:
-      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
-    permissions:
-      packages: write
-      contents: write
-    steps:
-      - uses: actions/checkout@v3
+          echo "erlang=hexpm/erlang:$ERLANG_ALPINE" >> $GITHUB_OUTPUT
+          echo "elixir=hexpm/elixir:$ELIXIR_ALPINE" >> $GITHUB_OUTPUT
 
       - name: Login to Github Container Registry
         uses: docker/login-action@v2
@@ -83,9 +66,9 @@ jobs:
             TAG=dev
           fi
 
-          echo "cache_src=ghcr.io/${{ github.repository }}:dev${{ matrix.dest }}" >> $GITHUB_OUTPUT
-          echo "e2e_image=ghcr.io/${{ github.repository }}:e2e${{ matrix.dest }}" >> $GITHUB_OUTPUT
-          echo "dest_image=ghcr.io/${{ github.repository }}:${TAG#v}${{ matrix.dest }}" >> $GITHUB_OUTPUT
+          echo "cache_src=ghcr.io/${{ github.repository }}:dev" >> $GITHUB_OUTPUT
+          echo "e2e_image=ghcr.io/${{ github.repository }}:e2e" >> $GITHUB_OUTPUT
+          echo "dest_image=ghcr.io/${{ github.repository }}:${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Build E2E Image
         uses: docker/build-push-action@v4
@@ -97,8 +80,8 @@ jobs:
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
           cache-to: type=inline
           build-args: |
-            ERLANG_IMAGE=${{ matrix.erlang_image }}
-            ELIXIR_IMAGE=${{ matrix.elixir_image }}
+            ERLANG_IMAGE=${{ steps.get-images.outputs.erlang }}
+            ELIXIR_IMAGE=${{ steps.get-images.outputs.elixir }}
 
       - uses: engineerd/setup-kind@v0.5.0
         id: kind
@@ -178,38 +161,23 @@ jobs:
         id: build_and_push
         with:
           push: ${{ github.ref_type == 'tag' }}
-          tags: "${{ steps.prepare_vars.outputs.dest_image }},${{ steps.prepare_vars.outputs.cache_src }},ghcr.io/${{ github.repository }}:latest-${{matrix.dest}}"
+          tags: "${{ steps.prepare_vars.outputs.dest_image }},${{ steps.prepare_vars.outputs.cache_src }},ghcr.io/${{ github.repository }}:latest"
           platforms: linux/amd64,linux/arm64/v8,linux/arm
           cache-from: type=registry,ref=${{ steps.prepare_vars.outputs.cache_src }}
           cache-to: type=inline
           build-args: |
-            ERLANG_IMAGE=${{ matrix.erlang_image }}
-            ELIXIR_IMAGE=${{ matrix.elixir_image }}
-
-      - uses: cloudposse/github-action-matrix-outputs-write@main
-        id: out
-        with:
-          matrix-step-name: ${{ github.job }}
-          matrix-key: ${{ matrix.elixir_image }}
-          outputs: |-
-            dest_image: ${{ steps.prepare_vars.outputs.dest_image }}@${{ steps.build_and_push.outputs.digest }}
-
-  create_gh_release:
-    runs-on: ubuntu-latest
-    needs: [build_container_image]
-    if: github.ref_type == 'tag'
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-      - uses: actions/checkout@v3
+            ERLANG_IMAGE=${{ steps.get-images.outputs.erlang }}
+            ELIXIR_IMAGE=${{ steps.get-images.outputs.elixir }}
 
       - name: Prepare release notes
+        if: github.ref_type == 'tag'
         run: |
           csplit -s CHANGELOG.md "/^## /" {1}
           cat xx01 > release_nots.md
 
       - name: release
         uses: actions/create-release@v1
+        if: github.ref_type == 'tag'
         id: create_release
         with:
           draft: false
@@ -220,49 +188,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
 
-  read_matrix_output:
-    runs-on: ubuntu-latest
-    needs: [build_container_image]
-    if: github.ref_type == 'tag'
-    steps:
-      - uses: cloudposse/github-action-matrix-outputs-read@main
-        id: read
-        with:
-          matrix-step-name: build_container_image
-
-    outputs:
-      result: "${{ steps.read.outputs.result }}"
-
-  upload_manifests:
-    runs-on: ubuntu-latest
-    needs: [build_matrix, read_matrix_output, create_gh_release]
-    strategy:
-      matrix: ${{ fromJSON(needs.build_matrix.outputs.matrix) }}
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Setup elixir
-        id: beam
-        uses: erlef/setup-beam@v1
-        with:
-          version-file: .tool-versions
-          version-type: strict
-          install-rebar: true
-          install-hex: true
-
-      - name: Install Mix Dependencies
-        run: mix deps.get
-
       - name: build manifest
+        if: github.ref_type == 'tag'
         run: |
-          MIX_ENV=prod mix kompost.gen.manifest --image "${{ fromJSON(needs.read_matrix_output.outputs.result).dest_image[matrix.elixir_image] }}" --namespace kompost -o manifest${{ matrix.dest }}.yaml
+          MIX_ENV=prod mix kompost.gen.manifest --image "${{ steps.prepare_vars.outputs.dest_image }}" --namespace kompost -o manifest$.yaml
 
       - name: upload manifest as artifact
+        if: github.ref_type == 'tag'
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          upload_url: ${{ needs.create_gh_release.outputs.upload_url }}
-          asset_path: ./manifest${{ matrix.dest }}.yaml
-          asset_name: manifest${{ matrix.dest }}.yaml
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./manifest.yaml
+          asset_name: manifest.yaml
           asset_content_type: application/yaml
