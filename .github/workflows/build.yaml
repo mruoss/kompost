@@ -45,7 +45,7 @@ jobs:
           echo "elixir=hexpm/elixir:$ELIXIR_ALPINE" >> $GITHUB_OUTPUT
 
       - name: Login to Github Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
