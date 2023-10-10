@@ -62,7 +62,7 @@ defmodule Kompost.MixProject do
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.2", only: [:dev, :test], runtime: false},
       {:dotenv_parser, "~> 2.0", only: [:dev, :test], runtime: false},
-      {:excoveralls, "~> 0.17.0", only: :test}
+      {:excoveralls, "~> 0.18.0", only: :test}
     ]
   end
 
