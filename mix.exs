@@ -43,7 +43,7 @@ defmodule Kompost.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:bandit, "~> 1.0.0"},
+      {:bandit, "~> 1.1.0"},
       # {:bonny, path: "/Users/mruoss/src/community/bonny"},
       # {:bonny, github: "coryodaniel/bonny", branch: "master"},
       {:bonny, "~> 1.0"},
