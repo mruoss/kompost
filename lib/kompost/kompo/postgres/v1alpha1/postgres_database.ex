@@ -66,6 +66,11 @@ defmodule Kompost.Kompo.Postgres.V1Alpha1.PostgresDatabase do
                   is_template:
                     description: "(Optional) If true, then this database can be cloned by any user with CREATEDB privileges; if false (the default), then only superusers or the owner of the database can clone it."
                     type: boolean
+              extensions:
+                description: "(Optional) List of extensions to be installed on the database"
+                type: array
+                items:
+                  type: string
           :status:
             :type: :object
             :properties:

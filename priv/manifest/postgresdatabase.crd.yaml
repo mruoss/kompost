@@ -35,6 +35,11 @@ spec:
                     name:
                       type: string
                   type: object
+                extensions:
+                  description: (Optional) List of extensions to be installed on the database
+                  items:
+                    type: string
+                  type: array
                 instanceRef:
                   properties:
                     name:

@@ -47,8 +47,8 @@ delete:
 docs:
 	docker run --name kompost-docs --rm -it -p 8000:8000 -v ${PWD}:/docs squidfunk/mkdocs-material
 
-.PHONY: helm
-helm:
+.PHONY: manifest
+manifest:
 	rm -rf ${MANIFEST_OUT_DIR}
 	mkdir -p ${MANIFEST_OUT_DIR}
 	MIX_ENV=prod mix compile

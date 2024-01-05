@@ -4,6 +4,9 @@ defmodule Kompost.Kompo.Postgres.Database do
   """
 
   alias Kompost.Kompo.Postgres.Database.Params
+  alias Kompost.Kompo.Postgres.Utils
+
+  require Logger
 
   @doc """
   Creates a Postgres safe db name from a resource.
@@ -77,5 +80,43 @@ defmodule Kompost.Kompo.Postgres.Database do
       {:error, exception} when is_exception(exception) ->
         {:error, Exception.message(exception)}
     end
+  end
+
+  @spec apply_extensions(Postgrex.conn(), extensions :: [binary()]) ::
+          :ok | {:error, binary()}
+  # credo:disable-for-lines:16 Credo.Check.Refactor.Nesting
+  def apply_extensions(conn, ext_wanted) do
+    Postgrex.transaction(conn, fn trx_conn ->
+      with {:ok, %Postgrex.Result{rows: ext_existing}} <-
+             Postgrex.query(trx_conn, ~s(SELECT extname FROM pg_extension), []) do
+        ext_to_drop =
+          MapSet.difference(MapSet.new(List.flatten(ext_existing)), MapSet.new(ext_wanted))
+
+        Enum.each(ext_to_drop, fn ext ->
+          case Postgrex.query(trx_conn, ~s(DROP EXTENSION IF EXISTS "#{ext}" RESTRICT), []) do
+            {:ok, _} ->
+              :ok
+
+            {:error, error} ->
+              message = Exception.message(error)
+              Logger.warning("Could not drop extension: " <> message)
+              DBConnection.rollback(trx_conn, message)
+          end
+        end)
+
+        Enum.each(ext_wanted, fn ext ->
+          case Postgrex.query(trx_conn, ~s(CREATE EXTENSION IF NOT EXISTS "#{ext}"), []) do
+            {:ok, _} ->
+              :ok
+
+            {:error, error} ->
+              message = Exception.message(error)
+              Logger.warning("Could not create extension: " <> message)
+              DBConnection.rollback(trx_conn, message)
+          end
+        end)
+      end
+    end)
+    |> Utils.process_trx_result()
   end
 end

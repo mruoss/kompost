@@ -4,6 +4,8 @@ defmodule Kompost.Kompo.Postgres.Privileges do
   """
   require Logger
 
+  alias Kompost.Kompo.Postgres.Utils
+
   @type access :: :read_only | :read_write
 
   @doc """
@@ -27,7 +29,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
         error -> DBConnection.rollback(trx_conn, error)
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
 
   def grant(username, :read_write, database, conn) do
@@ -44,7 +46,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
         error -> DBConnection.rollback(trx_conn, error)
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
 
   @doc """
@@ -108,7 +110,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
         error -> DBConnection.rollback(trx_conn, error)
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
 
   def revoke(username, :read_only, database, conn) do
@@ -121,7 +123,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
         error -> DBConnection.rollback(trx_conn, error)
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
 
   def revoke(username, :read_write, database, conn) do
@@ -139,7 +141,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
         error -> DBConnection.rollback(trx_conn, error)
       end
     end)
-    |> process_trx_result()
+    |> Utils.process_trx_result()
   end
 
   @doc """
@@ -176,10 +178,6 @@ defmodule Kompost.Kompo.Postgres.Privileges do
     end
   end
 
-  @spec process_trx_result({:ok, :ok} | term()) :: :ok | term()
-  defp process_trx_result({:ok, :ok}), do: :ok
-  defp process_trx_result({:error, error}), do: error
-
   @doc """
   Checks if the current user has the privilege to create roles on the server
   """
@@ -207,7 +205,7 @@ defmodule Kompost.Kompo.Postgres.Privileges do
           )
       end
     end)
-    |> process_trx_result
+    |> Utils.process_trx_result()
   end
 
   @doc """
