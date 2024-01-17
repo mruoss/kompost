@@ -100,14 +100,14 @@ jobs:
           install-hex: true
 
       - name: Retrieve Deps to Cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: deps-folder-cache-test-restore
         with:
           path: deps
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Retrieve Build Folder from Cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: build-folder-cache-restore
         with:
           path: _build
@@ -120,14 +120,14 @@ jobs:
           MIX_ENV=prod mix compile
 
       - name: Save Deps to Cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         id: deps-folder-cache-test-save
         with:
           path: deps
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-deps-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Save Build Folder to Cache
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         id: build-folder-cache-save
         with:
           path: _build

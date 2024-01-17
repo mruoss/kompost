@@ -37,14 +37,14 @@ jobs:
           install-hex: true
 
       - name: Retrieve Build Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: build-folder-cache
         with:
           path: _build/test
           key: ${{ runner.os }}-${{ steps.beam.outputs.otp-version }}-${{ steps.beam.outputs.elixir-version }}-build-test-${{ hashFiles(format('{0}{1}', github.workspace, '/mix.lock')) }}
 
       - name: Retrieve Mix Dependencies Cache
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         id: mix-cache
         with:
           path: deps
@@ -76,7 +76,7 @@ jobs:
         run: TEST_WAIT_TIMEOUT=10000 mix coveralls.github --include integration --timeout 20000
 
       - name: Retrieve PLT Cache
-        uses: actions/cache/restore@v3
+        uses: actions/cache/restore@v4
         id: plt-cache
         with:
           key: |
@@ -95,7 +95,7 @@ jobs:
 
       - name: Save PLT cache
         id: plt_cache_save
-        uses: actions/cache/save@v3
+        uses: actions/cache/save@v4
         if: steps.plt-cache.outputs.cache-hit != 'true'
         with:
           key: |
