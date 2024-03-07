@@ -15,7 +15,7 @@ type: application
 # This is the chart version. This version number should be incremented each time you make changes
 # to the chart and its templates, including the app version.
 # Versions are expected to follow Semantic Versioning (https://semver.org/)
-version: 0.1.1
+version: 1.0.0
 
 # This is the version number of the application being deployed. This version number should be
 # incremented each time you make changes to the application. Versions are not expected to
@@ -27,19 +27,14 @@ annotations:
   artifacthub.io/category: database
   artifacthub.io/containsSecurityUpdates: "false"
   artifacthub.io/changes: |
-    - kind: added
-      description: Postgres Kompo - Database Naming Strategy
-      links:
-        - name: GitHub PR
-          url: https://github.com/mruoss/kompost/pull/38
-        - name: GitHub PR
-          url: https://github.com/mruoss/kompost/pull/42
+    - kind: fixed
+      description: Chart URL in README
   artifacthub.io/license: Apache-2.0
   artifacthub.io/maintainers: |
     - name: Michael Ruoss
       email: michael@michaelruoss.ch
   artifacthub.io/operator: "true"
-  artifacthub.io/prerelease: "true"
+  artifacthub.io/prerelease: "false"
   artifacthub.io/links: |
     - name: GitHub
       url: https://github.com/mruoss/kompost
