@@ -176,7 +176,7 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           csplit -s CHANGELOG.md "/^## /" {1}
-          cat xx01 > release_nots.md
+          cat xx01 > release_notes.md
 
       - name: build manifest
         if: github.ref_type == 'tag'
@@ -188,12 +188,12 @@ jobs:
         if: github.ref_type == 'tag'
         id: create_release
         with:
-          files: manifest.yaml
+          files: |
+            manifest.yaml
           draft: false
           prerelease: false
           name: ${{ github.ref_name }}
           tag_name: ${{ github.ref }}
-          body_path: |
-            release_notes.md
+          body_path: release_notes.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
