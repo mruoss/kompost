@@ -178,31 +178,22 @@ jobs:
           csplit -s CHANGELOG.md "/^## /" {1}
           cat xx01 > release_nots.md
 
-      - name: release
-        uses: actions/create-release@v1
-        if: github.ref_type == 'tag'
-        id: create_release
-        with:
-          draft: false
-          prerelease: false
-          release_name: ${{ github.ref_name }}
-          tag_name: ${{ github.ref }}
-          body_path: release_nots.md
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-
       - name: build manifest
         if: github.ref_type == 'tag'
         run: |
           MIX_ENV=prod mix kompost.gen.manifest --image "${{ steps.prepare_vars.outputs.dest_image }}" --namespace kompost -o manifest$.yaml
 
-      - name: upload manifest as artifact
+      - name: release
+        uses: softprops/action-gh-release@v1
         if: github.ref_type == 'tag'
-        uses: actions/upload-release-asset@v1
+        id: create_release
+        with:
+          files: manifest.yaml
+          draft: false
+          prerelease: false
+          name: ${{ github.ref_name }}
+          tag_name: ${{ github.ref }}
+          body_path: |
+            release_nots.md
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./manifest.yaml
-          asset_name: manifest.yaml
-          asset_content_type: application/yaml
