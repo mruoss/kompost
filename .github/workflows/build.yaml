@@ -17,6 +17,9 @@ env:
 jobs:
   build_container_image:
     runs-on: ubuntu-latest
+    concurrency:
+      group: publish
+
     permissions:
       packages: write
       contents: write
