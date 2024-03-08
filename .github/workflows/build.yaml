@@ -184,7 +184,7 @@ jobs:
           MIX_ENV=prod mix kompost.gen.manifest --image "${{ steps.prepare_vars.outputs.dest_image }}" --namespace kompost -o manifest$.yaml
 
       - name: release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: github.ref_type == 'tag'
         id: create_release
         with:
