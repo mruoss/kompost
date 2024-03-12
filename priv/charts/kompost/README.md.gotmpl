@@ -13,13 +13,13 @@ docker run --rm --volume "$(pwd):/helm-docs" -u $(id -u) jnorwood/helm-docs:late
 
 ## TL;DR
 ```bash
-helm install -n kompost kompost {{ $chartRepo }}/{{ template "chart.name" . }}
+helm install --version {{ template "chart.version" . }} -n kompost kompost {{ $chartRepo }}/{{ template "chart.name" . }}
 ```
 
 ## Installing the Chart
 To install the chart with the release name `{{ template "chart.name" . }}`:
 ```bash
-helm install -n {{ template "chart.name" . }} {{ template "chart.name" . }} {{ $chartRepo }}/{{ template "chart.name" . }}
+helm install --version {{ template "chart.version" . }} -n {{ template "chart.name" . }} {{ template "chart.name" . }} {{ $chartRepo }}/{{ template "chart.name" . }}
 ```
 
 ## Uninstalling the Chart
