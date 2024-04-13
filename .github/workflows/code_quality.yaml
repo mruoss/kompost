@@ -80,7 +80,7 @@ jobs:
         id: plt-cache
         with:
           key: |
-            ${{ runner.os }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.ito-version }}-plt-${{ hashFiles('**/mix.lock') }}
+            ${{ runner.os }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-plt-${{ hashFiles('**/mix.lock') }}
           restore-keys: |
             ${{ runner.os }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-plt-
           path: |
@@ -99,7 +99,7 @@ jobs:
         if: steps.plt-cache.outputs.cache-hit != 'true'
         with:
           key: |
-            ${{ runner.os }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.ito-version }}-plt-${{ hashFiles('**/mix.lock') }}
+            ${{ runner.os }}-${{ steps.beam.outputs.elixir-version }}-${{ steps.beam.outputs.otp-version }}-plt-${{ hashFiles('**/mix.lock') }}
           path: |
             priv/plts
 
