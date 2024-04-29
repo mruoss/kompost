@@ -14,7 +14,7 @@ defmodule Kompost.K8sConn do
     {:ok, conn} =
       "KUBECONFIG"
       |> System.get_env("./test/integration/kubeconfig-dev.yaml")
-      |> K8s.Conn.from_file(insecure_skip_tls_verify: true)
+      |> K8s.Conn.from_file()
 
     conn
   end
@@ -23,7 +23,7 @@ defmodule Kompost.K8sConn do
     {:ok, conn} =
       "KUBECONFIG"
       |> System.get_env("./test/integration/kubeconfig-test.yaml")
-      |> K8s.Conn.from_file(insecure_skip_tls_verify: true)
+      |> K8s.Conn.from_file()
 
     conn
   end
@@ -33,9 +33,9 @@ defmodule Kompost.K8sConn do
 
     {:ok, conn} =
       if not is_nil(kubeconfig) and File.exists?(kubeconfig) do
-        K8s.Conn.from_file(kubeconfig, insecure_skip_tls_verify: true)
+        K8s.Conn.from_file(kubeconfig)
       else
-        K8s.Conn.from_service_account(insecure_skip_tls_verify: true)
+        K8s.Conn.from_service_account()
       end
 
     conn
