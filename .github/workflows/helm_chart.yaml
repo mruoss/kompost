@@ -42,8 +42,9 @@ jobs:
       - name: helm package
         if: ${{ github.event_name == 'push' }}
         run: |
+          export KEY_NAME=$(cat /tmp/private.pgp |  gpg --show-keys --with-colons | awk -F: '$1=="uid" {print $10; exit}'
           echo "${{ secrets.CHART_SIGN_PRIVATE_KEY }}" | gpg --dearmor --output keyring.gpg
-          helm package --sign --key 'Michael Ruoss (Kompost Helm Package Signing)' --keyring keyring.gpg priv/charts/kompost
+          helm package --sign --key $KEY_NAME --keyring keyring.gpg priv/charts/kompost
       - name: helm push
         if: ${{ github.event_name == 'push' }}
         run: |
