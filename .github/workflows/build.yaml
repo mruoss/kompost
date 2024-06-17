@@ -74,7 +74,7 @@ jobs:
           echo "dest_image=ghcr.io/${{ github.repository }}:${TAG#v}" >> $GITHUB_OUTPUT
 
       - name: Build E2E Image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         id: build_and_push_e2e
         with:
           push: false
@@ -160,7 +160,7 @@ jobs:
           kubectl logs -n kompost -c kompost -l k8s-app=kompost --since=1h
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         id: build_and_push
         with:
           push: ${{ github.ref_type == 'tag' }}
