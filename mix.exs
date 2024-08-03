@@ -50,7 +50,7 @@ defmodule Kompost.MixProject do
       {:jason, "~> 1.0"},
       {:k8s_webhoox, "~> 0.2.0"},
       {:plug, "~> 1.0"},
-      {:postgrex, "~> 0.18.0"},
+      {:postgrex, "~> 0.19.0"},
       {:slugger, "~> 0.3.0"},
 
       # Temporal.io
